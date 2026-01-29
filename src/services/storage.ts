@@ -26,6 +26,33 @@ export const storageApi = {
     return publicUrl;
   },
 
+  // ได้ signed URL สำหรับไฟล์ที่ต้องการ authentication
+  async getSignedUrl(path: string): Promise<string> {
+    try {
+      // ถ้าเป็น URL เต็มแล้ว ให้แยก path ออกมา
+      if (path.includes('supabase')) {
+        const url = new URL(path);
+        const pathParts = url.pathname.split('/');
+        const fileName = pathParts[pathParts.length - 1];
+        path = `documents/${fileName}`;
+      }
+
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(path, 3600); // 1 hour expiry
+
+      if (error) {
+        console.error('Failed to create signed URL:', error);
+        return path; // fallback to original path
+      }
+
+      return data.signedUrl;
+    } catch (err) {
+      console.error('Error creating signed URL:', err);
+      return path; // fallback to original path
+    }
+  },
+
   // ลบไฟล์จาก Storage
   async deleteFile(path: string): Promise<void> {
     try {

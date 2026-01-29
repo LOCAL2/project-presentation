@@ -54,6 +54,30 @@ export const ViewPage = () => {
         ]);
         setDocuments(docsData);
         setCategories(catsData);
+        
+        // เลือกเอกสารแรก (ปก) โดยอัตโนมัติ
+        if (docsData.length > 0) {
+          const firstDoc = docsData[0];
+          setSelectedDoc(firstDoc);
+          
+          // ถ้าเอกสารแรกอยู่ในหมวดหมู่ ให้ขยายหมวดหมู่นั้นด้วย
+          if (firstDoc.category) {
+            const updatedCats = catsData.map(cat => 
+              cat.id === firstDoc.category 
+                ? { ...cat, expanded: true }
+                : cat
+            );
+            setCategories(updatedCats);
+            
+            // อัพเดทสถานะใน Supabase
+            try {
+              await categoriesApi.update(firstDoc.category, { expanded: true });
+            } catch (err) {
+              console.error('Error updating category:', err);
+            }
+          }
+        }
+        
         setError(null);
       } catch (err) {
         setError('ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่อ Supabase');
@@ -182,6 +206,7 @@ export const ViewPage = () => {
       <div className="app-container">
         <div className="loading-message">
           <h2>กำลังโหลดข้อมูล...</h2>
+          <p style={{marginTop: '1rem', color: '#6c757d'}}>กำลังเชื่อมต่อกับ Supabase</p>
         </div>
       </div>
     );
@@ -198,11 +223,37 @@ export const ViewPage = () => {
             <li>การตั้งค่า Supabase URL และ API Key</li>
             <li>การเชื่อมต่ออินเทอร์เน็ต</li>
             <li>ไฟล์ <code>.env.local</code> มีค่าที่ถูกต้อง</li>
+            <li>ตาราง documents และ categories ถูกสร้างใน Supabase แล้ว</li>
           </ul>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              marginTop: '1rem',
+              padding: '0.75rem 1.5rem',
+              background: '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer'
+            }}
+          >
+            ลองใหม่อีกครั้ง
+          </button>
         </div>
       </div>
     );
   }
+
+  // เช็คว่ามีข้อมูลหรือไม่
+  const hasDocuments = documents.length > 0;
+  const hasCategories = categories.length > 0;
+
+  console.log('ViewPage data:', { 
+    documentsCount: documents.length, 
+    categoriesCount: categories.length,
+    documents,
+    categories 
+  });
 
   return (
     <div className="app-container">
@@ -211,7 +262,35 @@ export const ViewPage = () => {
           <h1>Smoke Detect</h1>
         </div>
         
-        <nav className="doc-list">
+        {!hasDocuments && !hasCategories ? (
+          <div style={{
+            padding: '2rem 1rem',
+            textAlign: 'center',
+            color: 'rgba(255, 255, 255, 0.7)',
+            fontSize: '0.9rem'
+          }}>
+            <p>ไม่มีเอกสารในระบบ</p>
+            <p style={{marginTop: '0.5rem', fontSize: '0.8rem'}}>
+              กรุณาเพิ่มเอกสารผ่านหน้า Manage
+            </p>
+            <a 
+              href="/manage" 
+              style={{
+                display: 'inline-block',
+                marginTop: '1rem',
+                padding: '0.5rem 1rem',
+                background: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '6px',
+                fontSize: '0.85rem'
+              }}
+            >
+              ไปที่หน้า Manage
+            </a>
+          </div>
+        ) : (
+          <nav className="doc-list">
           {/* เอกสารที่ไม่มีหมวดหมู่ */}
           {getUncategorizedDocuments().map((doc) => (
             <SortableItem
@@ -266,6 +345,7 @@ export const ViewPage = () => {
             </div>
           ))}
         </nav>
+        )}
       </aside>
       
       <main className="main-content">
