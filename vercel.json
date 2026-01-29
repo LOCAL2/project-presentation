@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "api/documents.ts": {
+      "runtime": "@vercel/node"
+    },
+    "api/categories.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}

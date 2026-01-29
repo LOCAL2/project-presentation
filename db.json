@@ -1,0 +1,38 @@
+{
+  "documents": [
+    {
+      "id": "cover",
+      "title": "หน้าปก",
+      "path": "/source/ปก.pdf",
+      "order": 0
+    },
+    {
+      "id": "01",
+      "title": "แบบ คง. 01",
+      "path": "/source/แบบ-คง.-01.pdf",
+      "category": "forms",
+      "order": 1
+    },
+    {
+      "id": "02",
+      "title": "แบบ คง. 02",
+      "path": "/source/แบบ-คง.-02.pdf",
+      "category": "forms",
+      "order": 2
+    },
+    {
+      "id": "03",
+      "title": "แบบ คง. 03",
+      "path": "/source/แบบ-คง.-03.pdf",
+      "category": "forms",
+      "order": 3
+    }
+  ],
+  "categories": [
+    {
+      "id": "forms",
+      "title": "เอกสาร คง.",
+      "expanded": true
+    }
+  ]
+}
