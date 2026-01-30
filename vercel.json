@@ -1,12 +1,4 @@
 {
-  "functions": {
-    "api/documents.ts": {
-      "runtime": "@vercel/node@20.x"
-    },
-    "api/categories.ts": {
-      "runtime": "@vercel/node@20.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
