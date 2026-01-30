@@ -19,6 +19,7 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
   const [currentVisiblePage, setCurrentVisiblePage] = useState<number>(1);
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
 
   // Memoize options เพื่อป้องกัน unnecessary reloads
   const options = useMemo(() => ({
@@ -49,6 +50,24 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
+  // Delay showing loading state
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (isLoading) {
+      // แสดง loading หลังจาก 300ms เท่านั้น (ถ้าโหลดเร็วกว่านี้จะไม่แสดง)
+      timer = setTimeout(() => {
+        setShowLoading(true);
+      }, 300);
+    } else {
+      setShowLoading(false);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isLoading]);
+
   // โหลดไฟล์ PDF และจัดการ CORS
   useEffect(() => {
     const loadPdfFile = async () => {
@@ -75,8 +94,6 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
       } catch (error) {
         console.error('Error loading PDF:', error);
         setPdfFile(filePath); // fallback ให้ลองใช้ path เดิม
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -133,7 +150,7 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
     }
   }, [numPages]);
 
-  if (!pdfFile || isLoading) {
+  if (!pdfFile || (isLoading && showLoading)) {
     return (
       <div className="react-pdf-viewer">
         <div className="pdf-loading">
