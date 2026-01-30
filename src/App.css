@@ -1,5 +1,5 @@
 * {
-  margin: 0;  
+  margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
@@ -575,7 +575,7 @@ body {
   justify-content: center;
   align-items: flex-start;
   overflow: auto;
-  background: #f9fafb;
+  background: #ffffff;
   padding: 2rem;
 }
 
@@ -600,12 +600,12 @@ body {
 }
 
 .react-pdf__Page {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
   margin: 0 auto;
   background: white;
-  border-radius: 8px;
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
+  border: none;
 }
 
 .react-pdf__Page canvas {
@@ -645,8 +645,10 @@ body {
   font-size: 1.1rem;
   color: #6b7280;
   background: white;
-  border-radius: 8px;
+  border-radius: 0;
   margin: 1rem;
+  box-shadow: none;
+  border: none;
 }
 
 .pdf-error {
@@ -864,11 +866,11 @@ body {
   font-size: 1.1rem;
   color: #3b82f6;
   background: white;
-  border-radius: 12px;
+  border-radius: 0;
   margin: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
   padding: 2rem;
-  border: 1px solid #e5e7eb;
+  border: none;
 }
 
 .pdf-loading::before {
