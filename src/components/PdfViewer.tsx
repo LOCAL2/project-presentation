@@ -151,11 +151,6 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
           <span className="page-info">
             {title}
           </span>
-          {numPages && (
-            <span style={{ fontSize: '0.85rem', color: '#6c757d', marginLeft: '0.5rem' }}>
-              ({numPages} หน้า)
-            </span>
-          )}
         </div>
         
         <div className="next-button-container">

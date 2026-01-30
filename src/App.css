@@ -244,7 +244,7 @@ body {
   flex: 1;
   padding: 1rem 2rem;
   cursor: pointer;
-  background: transparent;
+  background: #fff;
   border: none;
   color: inherit;
   text-align: left;
