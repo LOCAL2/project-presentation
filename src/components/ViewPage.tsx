@@ -211,7 +211,7 @@ export const ViewPage = () => {
         <div className="loading-progress">
           <div className="loading-progress-bar"></div>
         </div>
-        <p style={{marginTop: '1rem', opacity: 0.8}}>กำลังเชื่อมต่อกับ Supabase</p>
+        <p style={{marginTop: '1rem', opacity: 0.8}}>กำลังเชื่อมต่อกับ Database</p>
       </div>
     );
   }
