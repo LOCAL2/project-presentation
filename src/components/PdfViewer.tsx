@@ -72,6 +72,8 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
   useEffect(() => {
     const loadPdfFile = async () => {
       setIsLoading(true);
+      setPdfFile(null); // Reset pdfFile ก่อนโหลดใหม่
+      
       try {
         if (filePath.startsWith('http')) {
           // สำหรับไฟล์จาก Supabase Storage
@@ -94,6 +96,7 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
       } catch (error) {
         console.error('Error loading PDF:', error);
         setPdfFile(filePath); // fallback ให้ลองใช้ path เดิม
+        setIsLoading(false); // Set loading เป็น false เมื่อเกิด error
       }
     };
 
@@ -150,15 +153,17 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
     }
   }, [numPages]);
 
-  if (!pdfFile || (isLoading && showLoading)) {
+  if (!pdfFile) {
     return (
       <div className="react-pdf-viewer">
-        <div className="pdf-loading">
-          <div>กำลังโหลด PDF...</div>
-          <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
-            {title}
+        {showLoading && (
+          <div className="pdf-loading">
+            <div>กำลังโหลด PDF...</div>
+            <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
+              {title}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
