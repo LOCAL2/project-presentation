@@ -392,23 +392,26 @@ body {
   margin: 0;
   padding: 0;
   border: none;
-  background: #ffffff;
+  background: #fafafa;
+  border-left: 2px solid #e5e7eb;
+  margin-left: 2rem;
 }
 
 .doc-item-child {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   padding: 0;
   background: #fafafa;
-  border-left: 3px solid #e5e7eb;
+  border-left: 3px solid transparent;
 }
 
 .doc-item-child .doc-content {
-  padding: 0.75rem 2rem 0.75rem 2.5rem;
+  padding: 0.75rem 2rem 0.75rem 3rem;
 }
 
 .doc-item-child:hover {
   background: #f3f4f6;
+  border-left-color: #d1d5db;
 }
 
 .doc-item-child.active {
@@ -1060,12 +1063,12 @@ body {
   }
 
   .category-documents {
-    margin-left: 0;
+    margin-left: 1rem;
     padding-left: 0;
   }
 
   .doc-item-child .doc-content {
-    padding: 0.5rem 1.5rem 0.5rem 2rem;
+    padding: 0.5rem 1.5rem 0.5rem 2.5rem;
   }
 
   /* Mobile welcome message */
