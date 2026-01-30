@@ -261,26 +261,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid #e5e7eb;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   background: #ffffff;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.manage-category-action-btn--edit {
+  color: #3b82f6;
 }
 
 .manage-category-action-btn--edit:hover {
   background: #eff6ff;
   border-color: #3b82f6;
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.manage-category-action-btn--delete {
+  color: #ef4444;
 }
 
 .manage-category-action-btn--delete:hover {
   background: #fef2f2;
   border-color: #ef4444;
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
 .manage-category-header__left {
