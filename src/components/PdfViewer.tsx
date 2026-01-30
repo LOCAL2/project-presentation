@@ -15,9 +15,10 @@ interface PdfViewerProps {
 
 export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: PdfViewerProps) => {
   const [numPages, setNumPages] = useState<number>();
-  const [scale] = useState<number>(0.97);
+  const [scale, setScale] = useState<number>(0.97);
   const [currentVisiblePage, setCurrentVisiblePage] = useState<number>(1);
   const [pdfFile, setPdfFile] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Memoize options เพื่อป้องกัน unnecessary reloads
   const options = useMemo(() => ({
@@ -26,9 +27,30 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
     standardFontDataUrl: `https://unpkg.com/pdfjs-dist@5.4.296/standard_fonts/`,
   }), []);
 
+  // Auto-adjust scale based on screen size
+  useEffect(() => {
+    const updateScale = () => {
+      const isMobile = window.innerWidth <= 768;
+      const isSmallMobile = window.innerWidth <= 480;
+      
+      if (isSmallMobile) {
+        setScale(0.8);
+      } else if (isMobile) {
+        setScale(0.9);
+      } else {
+        setScale(0.97);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
   // โหลดไฟล์ PDF และจัดการ CORS
   useEffect(() => {
     const loadPdfFile = async () => {
+      setIsLoading(true);
       try {
         if (filePath.startsWith('http')) {
           // สำหรับไฟล์จาก Supabase Storage
@@ -51,6 +73,8 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
       } catch (error) {
         console.error('Error loading PDF:', error);
         setPdfFile(filePath); // fallback ให้ลองใช้ path เดิม
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -66,12 +90,14 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
+    setIsLoading(false);
     console.log('PDF loaded successfully:', { filePath, numPages });
   }
 
   function onDocumentLoadError(error: Error): void {
     console.error('PDF load error:', error);
     console.log('Failed to load PDF:', { filePath, pdfFile });
+    setIsLoading(false);
   }
 
   const pageNumbers = Array.from(new Array(numPages), (_, index) => index + 1);
@@ -105,10 +131,15 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
     }
   }, [numPages]);
 
-  if (!pdfFile) {
+  if (!pdfFile || isLoading) {
     return (
       <div className="react-pdf-viewer">
-        <div className="pdf-loading">กำลังโหลด PDF...</div>
+        <div className="pdf-loading">
+          <div>กำลังโหลด PDF...</div>
+          <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
+            {title}
+          </div>
+        </div>
       </div>
     );
   }
@@ -120,16 +151,23 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
           <span className="page-info">
             {title}
           </span>
+          {numPages && (
+            <span style={{ fontSize: '0.85rem', color: '#6c757d', marginLeft: '0.5rem' }}>
+              ({numPages} หน้า)
+            </span>
+          )}
         </div>
         
         <div className="next-button-container">
           {isLastPage && hasNextDocument ? (
             <button className="next-document-btn" onClick={onNextDocument}>
-              ไปยังบทถัดไป →
+              <span className="desktop-text">ไปยังบทถัดไป →</span>
+              <span className="mobile-text">ถัดไป →</span>
             </button>
           ) : (
             <span className="next-page-text">
-              เลื่อนลงเพื่อดูหน้าถัดไป
+              <span className="desktop-text">เลื่อนลงเพื่อดูหน้าถัดไป</span>
+              <span className="mobile-text">เลื่อนลง</span>
             </span>
           )}
         </div>
@@ -140,8 +178,19 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
           file={pdfFile}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
-          loading={<div className="pdf-loading">กำลังโหลด PDF...</div>}
-          error={<div className="pdf-error">ไม่สามารถโหลด PDF ได้<br/>Path: {filePath}</div>}
+          loading={
+            <div className="pdf-loading">
+              <div>กำลังโหลด PDF...</div>
+            </div>
+          }
+          error={
+            <div className="pdf-error">
+              <div>ไม่สามารถโหลด PDF ได้</div>
+              <div style={{ fontSize: '0.8rem', marginTop: '0.5rem', opacity: 0.7 }}>
+                Path: {filePath}
+              </div>
+            </div>
+          }
           options={options}
         >
           <div className="pdf-pages">
@@ -152,9 +201,21 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
                   scale={scale}
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
-                  loading={<div className="pdf-loading">กำลังโหลดหน้า {pageNumber}...</div>}
-                  error={<div className="pdf-error">ไม่สามารถโหลดหน้า {pageNumber} ได้</div>}
+                  loading={
+                    <div className="pdf-loading" style={{ height: '400px' }}>
+                      <div>กำลังโหลดหน้า {pageNumber}...</div>
+                    </div>
+                  }
+                  error={
+                    <div className="pdf-error" style={{ height: '400px' }}>
+                      <div>ไม่สามารถโหลดหน้า {pageNumber} ได้</div>
+                    </div>
+                  }
                 />
+                {/* Page number indicator for mobile */}
+                <div className="page-number-mobile">
+                  หน้า {pageNumber} / {numPages}
+                </div>
               </div>
             ))}
           </div>

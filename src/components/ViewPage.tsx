@@ -42,6 +42,7 @@ export const ViewPage = () => {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // โหลดข้อมูลเริ่มต้น
   useEffect(() => {
@@ -147,6 +148,7 @@ export const ViewPage = () => {
 
   const handleDocumentSelect = async (doc: Document) => {
     setSelectedDoc(doc);
+    setIsMobileMenuOpen(false); // ปิดเมนูมือถือเมื่อเลือกเอกสาร
     
     // ถ้าเอกสารอยู่ในหมวดหมู่ ให้ขยายหมวดหมู่นั้นโดยอัตโนมัติ
     if (doc.category) {
@@ -203,11 +205,13 @@ export const ViewPage = () => {
 
   if (loading) {
     return (
-      <div className="app-container">
-        <div className="loading-message">
-          <h2>กำลังโหลดข้อมูล...</h2>
-          <p style={{marginTop: '1rem', color: '#6c757d'}}>กำลังเชื่อมต่อกับ Supabase</p>
+      <div className="loading-message">
+        <h2>กำลังโหลดข้อมูล...</h2>
+        <div className="loading-spinner"></div>
+        <div className="loading-progress">
+          <div className="loading-progress-bar"></div>
         </div>
+        <p style={{marginTop: '1rem', opacity: 0.8}}>กำลังเชื่อมต่อกับ Supabase</p>
       </div>
     );
   }
@@ -257,7 +261,32 @@ export const ViewPage = () => {
 
   return (
     <div className="app-container">
-      <aside className="sidebar">
+      {/* Mobile Header */}
+      <header className="mobile-header">
+        <div className="mobile-header__content">
+          <h1 className="mobile-header__title">
+            {selectedDoc ? selectedDoc.title : 'Smoke Detect'}
+          </h1>
+          <button 
+            className="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {/* Sidebar Overlay for Mobile */}
+      <div 
+        className={`sidebar-overlay ${isMobileMenuOpen ? 'active' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      ></div>
+      
+      <aside className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <h1>Smoke Detect</h1>
         </div>
