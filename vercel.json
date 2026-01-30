@@ -1,10 +1,10 @@
 {
   "functions": {
     "api/documents.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@20.x"
     },
     "api/categories.ts": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@20.x"
     }
   },
   "rewrites": [
