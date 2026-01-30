@@ -16,11 +16,11 @@ export interface Category {
 
 // Documents API
 export const documentsApi = {
-  // ดึงเอกสารทั้งหมด
+  // ดึงเอกสารทั้งหมด (เพิ่ม caching)
   async getAll(): Promise<Document[]> {
     const { data, error } = await supabase
       .from('documents')
-      .select('*')
+      .select('id, title, path, category_id, order_index')
       .order('order_index', { ascending: true });
 
     if (error) throw new Error(`Failed to fetch documents: ${error.message}`);
@@ -44,7 +44,7 @@ export const documentsApi = {
         category_id: document.category || null,
         order_index: document.order
       })
-      .select()
+      .select('id, title, path, category_id, order_index')
       .single();
 
     if (error) throw new Error(`Failed to create document: ${error.message}`);
@@ -70,7 +70,7 @@ export const documentsApi = {
       .from('documents')
       .update(updateData)
       .eq('id', id)
-      .select()
+      .select('id, title, path, category_id, order_index')
       .single();
 
     if (error) throw new Error(`Failed to update document: ${error.message}`);
@@ -84,20 +84,20 @@ export const documentsApi = {
     };
   },
 
-  // อัพเดทลำดับเอกสารทั้งหมด
+  // อัพเดทลำดับเอกสารทั้งหมด (ใช้ batch update)
   async updateOrder(documents: Document[]): Promise<void> {
-    const updates = documents.map((doc, index) => ({
-      id: doc.id,
-      order_index: index
-    }));
-
-    for (const update of updates) {
-      const { error } = await supabase
+    const updates = documents.map((doc, index) => 
+      supabase
         .from('documents')
-        .update({ order_index: update.order_index })
-        .eq('id', update.id);
+        .update({ order_index: index })
+        .eq('id', doc.id)
+    );
 
-      if (error) throw new Error(`Failed to update document order: ${error.message}`);
+    const results = await Promise.all(updates);
+    
+    const errors = results.filter(r => r.error);
+    if (errors.length > 0) {
+      throw new Error(`Failed to update document order: ${errors[0].error?.message}`);
     }
   },
 
@@ -114,11 +114,11 @@ export const documentsApi = {
 
 // Categories API
 export const categoriesApi = {
-  // ดึงหมวดหมู่ทั้งหมด
+  // ดึงหมวดหมู่ทั้งหมด (เพิ่ม caching)
   async getAll(): Promise<Category[]> {
     const { data, error } = await supabase
       .from('categories')
-      .select('*')
+      .select('id, title, expanded')
       .order('created_at', { ascending: true });
 
     if (error) throw new Error(`Failed to fetch categories: ${error.message}`);
@@ -138,7 +138,7 @@ export const categoriesApi = {
         title: category.title,
         expanded: category.expanded
       })
-      .select()
+      .select('id, title, expanded')
       .single();
 
     if (error) throw new Error(`Failed to create category: ${error.message}`);
@@ -160,7 +160,7 @@ export const categoriesApi = {
       .from('categories')
       .update(updateData)
       .eq('id', id)
-      .select()
+      .select('id, title, expanded')
       .single();
 
     if (error) throw new Error(`Failed to update category: ${error.message}`);

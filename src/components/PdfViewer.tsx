@@ -25,6 +25,8 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
     cMapUrl: `https://unpkg.com/pdfjs-dist@5.4.296/cmaps/`,
     cMapPacked: true,
     standardFontDataUrl: `https://unpkg.com/pdfjs-dist@5.4.296/standard_fonts/`,
+    disableStream: false,
+    disableAutoFetch: false,
   }), []);
 
   // Auto-adjust scale based on screen size
