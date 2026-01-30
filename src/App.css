@@ -644,9 +644,9 @@ body {
   height: 400px;
   font-size: 1.1rem;
   color: #6b7280;
-  background: white;
+  background: transparent;
   border-radius: 0;
-  margin: 1rem;
+  margin: 0;
   box-shadow: none;
   border: none;
 }
@@ -811,7 +811,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #fafafa;
+  background: #ffffff;
   color: #1f2937;
   text-align: center;
   padding: 2rem;
@@ -865,9 +865,9 @@ body {
   height: 60vh;
   font-size: 1.1rem;
   color: #3b82f6;
-  background: white;
+  background: transparent;
   border-radius: 0;
-  margin: 1rem;
+  margin: 0;
   box-shadow: none;
   padding: 2rem;
   border: none;
@@ -896,7 +896,7 @@ body {
   height: 100vh;
   text-align: center;
   padding: 2rem;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .error-message {
