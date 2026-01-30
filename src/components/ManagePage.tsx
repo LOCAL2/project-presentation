@@ -85,6 +85,9 @@ export const ManagePage = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -264,6 +267,88 @@ export const ManagePage = () => {
     }
   };
 
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setEditCategoryName(category.title);
+    setShowEditCategoryModal(true);
+  };
+
+  const handleUpdateCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCategory || !editCategoryName.trim()) return;
+
+    try {
+      setLoading(true);
+      await categoriesApi.update(editingCategory.id, { title: editCategoryName.trim() });
+      
+      setCategories(prev => prev.map(cat => 
+        cat.id === editingCategory.id 
+          ? { ...cat, title: editCategoryName.trim() }
+          : cat
+      ));
+      
+      setShowEditCategoryModal(false);
+      setEditingCategory(null);
+      setEditCategoryName('');
+      setError(null);
+    } catch (err) {
+      console.error('Error updating category:', err);
+      setError('ไม่สามารถแก้ไขชื่อหมวดหมู่ได้');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (category: Category) => {
+    const categoryDocs = getDocumentsByCategory(category.id);
+    
+    if (categoryDocs.length > 0) {
+      if (!confirm(`หมวดหมู่ "${category.title}" มีเอกสาร ${categoryDocs.length} ไฟล์\nเอกสารเหล่านี้จะถูกย้ายไปยัง "เอกสารทั่วไป"\n\nต้องการลบหมวดหมู่นี้หรือไม่?`)) {
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        
+        for (const doc of categoryDocs) {
+          await documentsApi.update(doc.id, { category: undefined });
+        }
+        
+        await categoriesApi.delete(category.id);
+        
+        setCategories(prev => prev.filter(cat => cat.id !== category.id));
+        setDocuments(prev => prev.map(doc => 
+          doc.category === category.id 
+            ? { ...doc, category: undefined }
+            : doc
+        ));
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error deleting category:', err);
+        setError('ไม่สามารถลบหมวดหมู่ได้');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (!confirm(`ต้องการลบหมวดหมู่ "${category.title}" หรือไม่?`)) {
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        await categoriesApi.delete(category.id);
+        setCategories(prev => prev.filter(cat => cat.id !== category.id));
+        setError(null);
+      } catch (err) {
+        console.error('Error deleting category:', err);
+        setError('ไม่สามารถลบหมวดหมู่ได้');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const filteredDocuments = documents.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -358,19 +443,43 @@ export const ManagePage = () => {
               
               return (
                 <section key={category.id} className="manage-section">
-                  <button
-                    className="manage-category-header"
-                    onClick={() => toggleCategory(category.id)}
-                  >
-                    <div className="manage-category-header__left">
-                      <span className={`manage-category-header__chevron ${category.expanded ? 'manage-category-header__chevron--expanded' : ''}`}>
-                        ▼
-                      </span>
-                      📁
-                      <h2 className="manage-category-header__title">{category.title}</h2>
-                      <span className="manage-category-header__count">{categoryDocs.length}</span>
+                  <div className="manage-category-header-wrapper">
+                    <button
+                      className="manage-category-header"
+                      onClick={() => toggleCategory(category.id)}
+                    >
+                      <div className="manage-category-header__left">
+                        <span className={`manage-category-header__chevron ${category.expanded ? 'manage-category-header__chevron--expanded' : ''}`}>
+                          ▼
+                        </span>
+                        📁
+                        <h2 className="manage-category-header__title">{category.title}</h2>
+                        <span className="manage-category-header__count">{categoryDocs.length}</span>
+                      </div>
+                    </button>
+                    <div className="manage-category-actions">
+                      <button
+                        className="manage-category-action-btn manage-category-action-btn--edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditCategory(category);
+                        }}
+                        title="แก้ไขชื่อหมวดหมู่"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="manage-category-action-btn manage-category-action-btn--delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCategory(category);
+                        }}
+                        title="ลบหมวดหมู่"
+                      >
+                        🗑️
+                      </button>
                     </div>
-                  </button>
+                  </div>
                   
                   {category.expanded && (
                     <div className="manage-doc-grid">
@@ -507,6 +616,51 @@ export const ManagePage = () => {
                   disabled={loading || !title.trim() || !file}
                 >
                   {loading ? 'กำลังอัพโหลด...' : 'เพิ่มเอกสาร'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Category Modal */}
+      {showEditCategoryModal && editingCategory && (
+        <div className="manage-modal-overlay" onClick={() => setShowEditCategoryModal(false)}>
+          <div className="manage-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="manage-modal__header">
+              <h2 className="manage-modal__title">แก้ไขชื่อหมวดหมู่</h2>
+              <button className="manage-modal__close" onClick={() => setShowEditCategoryModal(false)}>×</button>
+            </div>
+            
+            <form onSubmit={handleUpdateCategory} className="manage-modal__form">
+              <div className="manage-form-group">
+                <label className="manage-form-label">ชื่อหมวดหมู่ *</label>
+                <input
+                  type="text"
+                  value={editCategoryName}
+                  onChange={(e) => setEditCategoryName(e.target.value)}
+                  className="manage-form-input"
+                  placeholder="กรอกชื่อหมวดหมู่"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="manage-modal__actions">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEditCategoryModal(false)} 
+                  className="manage-btn manage-btn--secondary"
+                  disabled={loading}
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="manage-btn manage-btn--primary"
+                  disabled={loading || !editCategoryName.trim()}
+                >
+                  {loading ? 'กำลังบันทึก...' : 'บันทึก'}
                 </button>
               </div>
             </form>
