@@ -112,27 +112,6 @@ export const ManageMembers = () => {
     setShowAddModal(true);
   };
 
-  const handleDelete = async (member: Member) => {
-    if (!confirm(`ต้องการลบสมาชิก "${member.name}" หรือไม่?`)) return;
-
-    try {
-      setLoading(true);
-      
-      if (member.avatarUrl) {
-        await membersApi.deleteAvatar(member.avatarUrl);
-      }
-      
-      await membersApi.delete(member.id);
-      setMembers(prev => prev.filter(m => m.id !== member.id));
-      setError(null);
-    } catch (err) {
-      console.error('Error deleting member:', err);
-      setError('ไม่สามารถลบสมาชิกได้');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const closeModal = () => {
     setShowAddModal(false);
     setEditingMember(null);
