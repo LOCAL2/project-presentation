@@ -3,6 +3,7 @@ import { ViewPage } from './components/ViewPage';
 import { ManagePage } from './components/ManagePage';
 import { TestConnection } from './components/TestConnection';
 import { NotFound } from './components/NotFound';
+import { MembersPage } from './components/MembersPage';
 import './App.css';
 import './styles/manage-pro.css';
 
@@ -11,6 +12,7 @@ function App() {
     <Routes>
       <Route path="/" element={<ViewPage />} />
       <Route path="/manage" element={<ManagePage />} />
+      <Route path="/members" element={<MembersPage />} />
       <Route path="/test" element={<TestConnection />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
