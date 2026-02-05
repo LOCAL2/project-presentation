@@ -6,6 +6,8 @@ export interface Document {
   path: string;
   category?: string;
   order: number;
+  type?: 'pdf' | 'canva';
+  canvaUrl?: string;
 }
 
 export interface Category {
@@ -20,7 +22,7 @@ export const documentsApi = {
   async getAll(): Promise<Document[]> {
     const { data, error } = await supabase
       .from('documents')
-      .select('id, title, path, category_id, order_index')
+      .select('id, title, path, category_id, order_index, type, canva_url')
       .order('order_index', { ascending: true });
 
     if (error) throw new Error(`Failed to fetch documents: ${error.message}`);
@@ -30,7 +32,9 @@ export const documentsApi = {
       title: doc.title,
       path: doc.path,
       category: doc.category_id || undefined,
-      order: doc.order_index
+      order: doc.order_index,
+      type: doc.type || 'pdf',
+      canvaUrl: doc.canva_url || undefined
     }));
   },
 
@@ -42,9 +46,11 @@ export const documentsApi = {
         title: document.title,
         path: document.path,
         category_id: document.category || null,
-        order_index: document.order
+        order_index: document.order,
+        type: document.type || 'pdf',
+        canva_url: document.canvaUrl || null
       })
-      .select('id, title, path, category_id, order_index')
+      .select('id, title, path, category_id, order_index, type, canva_url')
       .single();
 
     if (error) throw new Error(`Failed to create document: ${error.message}`);
@@ -54,7 +60,9 @@ export const documentsApi = {
       title: data.title,
       path: data.path,
       category: data.category_id || undefined,
-      order: data.order_index
+      order: data.order_index,
+      type: data.type || 'pdf',
+      canvaUrl: data.canva_url || undefined
     };
   },
 
@@ -65,12 +73,14 @@ export const documentsApi = {
     if (document.path !== undefined) updateData.path = document.path;
     if (document.category !== undefined) updateData.category_id = document.category;
     if (document.order !== undefined) updateData.order_index = document.order;
+    if (document.type !== undefined) updateData.type = document.type;
+    if (document.canvaUrl !== undefined) updateData.canva_url = document.canvaUrl;
 
     const { data, error } = await supabase
       .from('documents')
       .update(updateData)
       .eq('id', id)
-      .select('id, title, path, category_id, order_index')
+      .select('id, title, path, category_id, order_index, type, canva_url')
       .single();
 
     if (error) throw new Error(`Failed to update document: ${error.message}`);
@@ -80,7 +90,9 @@ export const documentsApi = {
       title: data.title,
       path: data.path,
       category: data.category_id || undefined,
-      order: data.order_index
+      order: data.order_index,
+      type: data.type || 'pdf',
+      canvaUrl: data.canva_url || undefined
     };
   },
 

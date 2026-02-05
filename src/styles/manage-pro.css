@@ -659,3 +659,46 @@
     justify-content: flex-end;
   }
 }
+
+
+/* Document Type Selector */
+.manage-type-selector {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.manage-type-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  background: white;
+  color: #6b7280;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.manage-type-btn:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.manage-type-btn--active {
+  border-color: #1f2937;
+  background: #1f2937;
+  color: white;
+}
+
+.manage-form-hint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.5;
+}

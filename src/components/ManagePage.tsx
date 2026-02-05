@@ -62,7 +62,9 @@ function SortableDocumentCard({
       
       <div className="manage-doc-card__content">
         <h3 className="manage-doc-card__title">{doc.title}</h3>
-        <p className="manage-doc-card__meta">PDF Document</p>
+        <p className="manage-doc-card__meta">
+          {doc.type === 'canva' ? '🎨 Canva Presentation' : '📄 PDF Document'}
+        </p>
       </div>
       
       <button 
@@ -97,6 +99,8 @@ export const ManagePage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [newCategory, setNewCategory] = useState('');
+  const [documentType, setDocumentType] = useState<'pdf' | 'canva'>('pdf');
+  const [canvaUrl, setCanvaUrl] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -225,12 +229,17 @@ export const ManagePage = () => {
 
   const handleAddDocument = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !file) return;
+    if (!title.trim()) return;
+    if (documentType === 'pdf' && !file) return;
+    if (documentType === 'canva' && !canvaUrl.trim()) return;
 
     try {
       setLoading(true);
       
-      const fileUrl = await storageApi.uploadPDF(file);
+      let fileUrl = '';
+      if (documentType === 'pdf' && file) {
+        fileUrl = await storageApi.uploadPDF(file);
+      }
       
       let categoryId = selectedCategory;
       
@@ -249,7 +258,9 @@ export const ManagePage = () => {
         title: title.trim(),
         path: fileUrl,
         category: categoryId || undefined,
-        order: maxOrder + 1
+        order: maxOrder + 1,
+        type: documentType,
+        canvaUrl: documentType === 'canva' ? canvaUrl.trim() : undefined
       });
 
       setDocuments(prev => [...prev, newDocument]);
@@ -258,6 +269,8 @@ export const ManagePage = () => {
       setFile(null);
       setSelectedCategory('');
       setNewCategory('');
+      setDocumentType('pdf');
+      setCanvaUrl('');
       setError(null);
     } catch (err) {
       console.error('Error adding document:', err);
@@ -535,6 +548,26 @@ export const ManagePage = () => {
             
             <form onSubmit={handleAddDocument} className="manage-modal__form">
               <div className="manage-form-group">
+                <label className="manage-form-label">ประเภทเอกสาร *</label>
+                <div className="manage-type-selector">
+                  <button
+                    type="button"
+                    className={`manage-type-btn ${documentType === 'pdf' ? 'manage-type-btn--active' : ''}`}
+                    onClick={() => setDocumentType('pdf')}
+                  >
+                    📄 PDF
+                  </button>
+                  <button
+                    type="button"
+                    className={`manage-type-btn ${documentType === 'canva' ? 'manage-type-btn--active' : ''}`}
+                    onClick={() => setDocumentType('canva')}
+                  >
+                    🎨 Canva
+                  </button>
+                </div>
+              </div>
+
+              <div className="manage-form-group">
                 <label className="manage-form-label">ชื่อเอกสาร *</label>
                 <input
                   type="text"
@@ -571,35 +604,52 @@ export const ManagePage = () => {
                 />
               </div>
 
-              <div className="manage-form-group">
-                <label className="manage-form-label">ไฟล์ PDF *</label>
-                <div className={`manage-file-upload ${file ? 'manage-file-upload--has-file' : ''}`}>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={(e) => {
-                      const selectedFile = e.target.files?.[0];
-                      if (selectedFile && selectedFile.type === 'application/pdf') {
-                        setFile(selectedFile);
-                        if (!title) {
-                          setTitle(selectedFile.name.replace('.pdf', ''));
+              {documentType === 'pdf' ? (
+                <div className="manage-form-group">
+                  <label className="manage-form-label">ไฟล์ PDF *</label>
+                  <div className={`manage-file-upload ${file ? 'manage-file-upload--has-file' : ''}`}>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const selectedFile = e.target.files?.[0];
+                        if (selectedFile && selectedFile.type === 'application/pdf') {
+                          setFile(selectedFile);
+                          if (!title) {
+                            setTitle(selectedFile.name.replace('.pdf', ''));
+                          }
+                        } else {
+                          alert('กรุณาเลือกไฟล์ PDF เท่านั้น');
                         }
-                      } else {
-                        alert('กรุณาเลือกไฟล์ PDF เท่านั้น');
-                      }
-                    }}
-                    className="manage-file-upload__input"
-                    id="file-upload-modal"
-                  />
-                  <label htmlFor="file-upload-modal" className="manage-file-upload__label">
-                    {file ? (
-                      <span>✓ {file.name}</span>
-                    ) : (
-                      <span>📄 เลือกไฟล์ PDF</span>
-                    )}
-                  </label>
+                      }}
+                      className="manage-file-upload__input"
+                      id="file-upload-modal"
+                    />
+                    <label htmlFor="file-upload-modal" className="manage-file-upload__label">
+                      {file ? (
+                        <span>✓ {file.name}</span>
+                      ) : (
+                        <span>📄 เลือกไฟล์ PDF</span>
+                      )}
+                    </label>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="manage-form-group">
+                  <label className="manage-form-label">Canva URL *</label>
+                  <input
+                    type="url"
+                    value={canvaUrl}
+                    onChange={(e) => setCanvaUrl(e.target.value)}
+                    className="manage-form-input"
+                    placeholder="https://www.canva.com/design/..."
+                    required
+                  />
+                  <p className="manage-form-hint">
+                    💡 วิธีการ: เปิด Canva → คลิก Share → คลิก "More" → เลือก "Website" → คัดลอก URL
+                  </p>
+                </div>
+              )}
 
               <div className="manage-modal__actions">
                 <button 
@@ -613,9 +663,9 @@ export const ManagePage = () => {
                 <button 
                   type="submit" 
                   className="manage-btn manage-btn--primary"
-                  disabled={loading || !title.trim() || !file}
+                  disabled={loading || !title.trim() || (documentType === 'pdf' && !file) || (documentType === 'canva' && !canvaUrl.trim())}
                 >
-                  {loading ? 'กำลังอัพโหลด...' : 'เพิ่มเอกสาร'}
+                  {loading ? (documentType === 'pdf' ? 'กำลังอัพโหลด...' : 'กำลังบันทึก...') : 'เพิ่มเอกสาร'}
                 </button>
               </div>
             </form>

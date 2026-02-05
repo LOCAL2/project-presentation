@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PdfViewer } from './PdfViewer';
+import { CanvaViewer } from './CanvaViewer';
 import { documentsApi, categoriesApi, type Document, type Category } from '../services/supabase-api';
 import { supabase } from '../lib/supabase';
 
@@ -367,12 +368,21 @@ export const ViewPage = () => {
       
       <main className="main-content">
         {selectedDoc ? (
-          <PdfViewer 
-            filePath={selectedDoc.path}
-            title={selectedDoc.title}
-            onNextDocument={handleNextDocument}
-            hasNextDocument={hasNextDocument}
-          />
+          selectedDoc.type === 'canva' && selectedDoc.canvaUrl ? (
+            <CanvaViewer 
+              canvaUrl={selectedDoc.canvaUrl}
+              title={selectedDoc.title}
+              onNextDocument={handleNextDocument}
+              hasNextDocument={hasNextDocument}
+            />
+          ) : (
+            <PdfViewer 
+              filePath={selectedDoc.path}
+              title={selectedDoc.title}
+              onNextDocument={handleNextDocument}
+              hasNextDocument={hasNextDocument}
+            />
+          )
         ) : (
           <div className="welcome-message">
             <h2>เลือกเอกสารที่ต้องการดูจากเมนูด้านซ้าย</h2>
