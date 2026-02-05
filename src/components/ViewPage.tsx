@@ -13,7 +13,9 @@ function SortableItem({
   isSelected: boolean; 
   onSelect: (doc: Document) => void;
   isChild?: boolean;
-}) {
+})
+
+{
   return (
     <div
       className={`doc-item ${isChild ? 'doc-item-child' : ''} ${isSelected ? 'active' : ''}`}

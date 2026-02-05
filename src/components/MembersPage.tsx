@@ -4,24 +4,24 @@ export const MembersPage = () => {
   const members = [
     {
       id: 1,
-      name: 'สมชาย ใจดี',
-      role: 'Project Manager',
-      email: 'somchai@example.com',
-      avatar: 'SC'
+      name: 'ภูมิรพี พรหมมาศ',
+      role: 'Project Design',
+      email: '66209010037@tnk.ac.th',
+      avatar: 'Poom'
     },
     {
       id: 2,
-      name: 'สมหญิง รักงาน',
-      role: 'Developer',
-      email: 'somying@example.com',
-      avatar: 'SY'
+      name: 'นภัสพล ผู้แสนสะอาด',
+      role: 'Project Manager',
+      email: '66209010031@tnk.ac.th',
+      avatar: 'ST'
     },
     {
       id: 3,
-      name: 'วิชัย เก่งมาก',
-      role: 'Designer',
-      email: 'wichai@example.com',
-      avatar: 'WC'
+      name: 'วรเดช พันธ์พืช',
+      role: 'Coding',
+      email: '66209010040@tnk.ac.th',
+      avatar: 'WR'
     }
   ];
 
