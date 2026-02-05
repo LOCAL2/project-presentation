@@ -497,6 +497,27 @@ body {
   background: white;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.page-info {
+  font-weight: 600;
+  color: #1f2937;
+  min-width: 120px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .next-button-container {
@@ -504,6 +525,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .members-link-btn {
@@ -544,6 +566,8 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .next-document-btn:hover {
@@ -555,6 +579,7 @@ body {
   color: #6b7280;
   font-size: 0.9rem;
   font-style: italic;
+  white-space: nowrap;
 }
 
 .page-controls {
@@ -1028,35 +1053,42 @@ body {
 
   .pdf-controls {
     padding: 0.75rem 1rem;
-    flex-wrap: nowrap;
-    gap: 0.5rem;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
 
   .page-controls {
-    flex: 1;
-    min-width: 150px;
-  }
-
-  .next-button-container {
-    flex-shrink: 0;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: nowrap;
-  }
-
-  .members-link-btn {
-    padding: 0.5rem 0.75rem;
-    min-width: auto;
-  }
-
-  .members-link-btn .desktop-text {
-    display: none;
+    flex: 1 1 100%;
+    min-width: 100%;
+    order: 1;
   }
 
   .page-info {
     font-size: 0.9rem;
     min-width: auto;
+  }
+
+  .next-button-container {
+    flex: 1 1 100%;
+    order: 2;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .next-document-btn,
+  .next-page-text {
+    flex: 1;
+    text-align: center;
+  }
+
+  .members-link-btn {
+    padding: 0.5rem 0.75rem;
+    min-width: auto;
+    flex-shrink: 0;
+  }
+
+  .members-link-btn .desktop-text {
+    display: none;
   }
 
   .pdf-document {
