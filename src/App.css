@@ -503,10 +503,11 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: nowrap;
 }
 
 .members-link-btn {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   gap: 0.5rem;
   background: #f9fafb;
@@ -519,6 +520,8 @@ body {
   font-weight: 500;
   transition: all 0.2s ease;
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .members-link-btn:hover {
@@ -1025,19 +1028,26 @@ body {
 
   .pdf-controls {
     padding: 0.75rem 1rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.5rem;
+    overflow-x: auto;
   }
 
   .page-controls {
     flex: 1;
-    min-width: 200px;
+    min-width: 150px;
   }
 
   .next-button-container {
     flex-shrink: 0;
     display: flex;
     gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+
+  .members-link-btn {
+    padding: 0.5rem 0.75rem;
+    min-width: auto;
   }
 
   .members-link-btn .desktop-text {
