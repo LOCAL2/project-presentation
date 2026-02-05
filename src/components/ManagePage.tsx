@@ -648,12 +648,17 @@ export const ManagePage = () => {
                     value={canvaUrl}
                     onChange={(e) => setCanvaUrl(e.target.value)}
                     className="manage-form-input"
-                    placeholder="https://xxx.my.canva.site/xxx หรือ https://www.canva.com/design/..."
+                    placeholder="https://www.canva.com/design/xxx/view?embed"
                     required
                   />
                   <p className="manage-form-hint">
-                    💡 วิธีการ: เปิด Canva → คลิก Share → คลิก "Website" → คัดลอก URL<br/>
-                    รองรับทั้ง Canva Site URL (xxx.my.canva.site) และ Design URL
+                    💡 <strong>วิธีรับ URL ที่ใช้ embed ได้:</strong><br/>
+                    1. เปิด Canva Design<br/>
+                    2. คลิก Share → More → Embed<br/>
+                    3. คัดลอก URL จาก <code>src="..."</code> ในโค้ด HTML<br/>
+                    <br/>
+                    ✅ ใช้ได้: <code>canva.com/design/xxx/view?embed</code><br/>
+                    ❌ ใช้ไม่ได้: <code>xxx.my.canva.site</code> (มี CSP บล็อก)
                   </p>
                 </div>
               )}
