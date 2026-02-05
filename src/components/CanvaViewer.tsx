@@ -6,6 +6,28 @@ interface CanvaViewerProps {
 }
 
 export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }: CanvaViewerProps) => {
+  // แปลง Canva Site URL เป็น embed URL
+  const getEmbedUrl = (url: string): string => {
+    // ถ้าเป็น Canva Site URL (xxx.my.canva.site/xxx)
+    if (url.includes('.my.canva.site')) {
+      // ลองเพิ่ม ?embed=1 เพื่อบังคับให้เป็น embed mode
+      return url.includes('?') ? `${url}&embed=1` : `${url}?embed=1`;
+    }
+    
+    // ถ้าเป็น embed URL อยู่แล้ว
+    if (url.includes('/embed')) {
+      return url;
+    }
+    
+    // Canva Design URL
+    if (url.includes('canva.com/design/')) {
+      return url.includes('?') ? `${url}&embed` : `${url}?embed`;
+    }
+    
+    return url;
+  };
+
+  const embedUrl = getEmbedUrl(canvaUrl);
   const isCanvaSite = canvaUrl.includes('.my.canva.site');
 
   return (
@@ -35,53 +57,31 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
       </div>
 
       <div className="canva-container">
-        {isCanvaSite ? (
-          <div className="canva-external-link">
-            <div className="canva-external-content">
-              <div className="canva-icon">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-              </div>
-              <h2 className="canva-external-title">{title}</h2>
-              <p className="canva-external-description">
-                Canva Presentation ไม่สามารถแสดงแบบ embed ได้<br/>
-                กรุณาคลิกปุ่มด้านล่างเพื่อเปิดในหน้าต่างใหม่
+        <iframe
+          src={embedUrl}
+          allowFullScreen
+          allow="fullscreen"
+          className="canva-iframe"
+          title={title}
+          loading="lazy"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+        />
+        {isCanvaSite && (
+          <div className="canva-fallback-overlay">
+            <div className="canva-fallback-content">
+              <p className="canva-fallback-text">
+                ไม่สามารถแสดง Canva ได้? 
               </p>
               <a 
                 href={canvaUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="canva-open-btn"
+                className="canva-fallback-btn"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                  <polyline points="15 3 21 3 21 9"></polyline>
-                  <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-                เปิด Canva Presentation
+                เปิดในแท็บใหม่ →
               </a>
-              <p className="canva-external-hint">
-                💡 Presentation จะเปิดในแท็บใหม่
-              </p>
             </div>
           </div>
-        ) : (
-          <>
-            <iframe
-              src={canvaUrl}
-              allowFullScreen
-              allow="fullscreen"
-              className="canva-iframe"
-              title={title}
-              loading="lazy"
-            />
-            <div className="canva-hint">
-              💡 กด fullscreen icon ที่มุมขวาล่างเพื่อดูแบบเต็มจอ
-            </div>
-          </>
         )}
       </div>
     </div>
