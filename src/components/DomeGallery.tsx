@@ -138,6 +138,28 @@ export default function DomeGallery({
   };
 
   const lockedRadiusRef = useRef<number | null>(null);
+  const autoRotateRAF = useRef<number | null>(null);
+
+  // Auto-rotate ช้าๆไปทางซ้าย
+  useEffect(() => {
+    const autoRotate = () => {
+      if (!draggingRef.current && !focusedElRef.current && !inertiaRAF.current) {
+        // หมุนช้าๆไปทางซ้าย (เพิ่ม Y rotation)
+        const nextY = wrapAngleSigned(rotationRef.current.y + 0.02);
+        rotationRef.current = { ...rotationRef.current, y: nextY };
+        applyTransform(rotationRef.current.x, nextY);
+      }
+      autoRotateRAF.current = requestAnimationFrame(autoRotate);
+    };
+
+    autoRotateRAF.current = requestAnimationFrame(autoRotate);
+
+    return () => {
+      if (autoRotateRAF.current) {
+        cancelAnimationFrame(autoRotateRAF.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -353,6 +375,8 @@ export default function DomeGallery({
 
     const img = document.createElement('img');
     img.src = rawSrc;
+    img.loading = 'eager';
+    img.decoding = 'async';
     img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
     overlay.appendChild(img);
 
@@ -457,7 +481,14 @@ export default function DomeGallery({
                   aria-label={it.alt || 'Open image'}
                   onClick={onTileClick}
                 >
-                  <img src={it.src} draggable={false} alt={it.alt} />
+                  <img 
+                    src={it.src} 
+                    draggable={false} 
+                    alt={it.alt}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority={i < 20 ? "high" : "auto"}
+                  />
                 </div>
               </div>
             ))}

@@ -11,14 +11,15 @@ export const storageApi = {
       .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: file.type
       });
 
     if (error) {
       throw new Error(`Failed to upload file: ${error.message}`);
     }
 
-    // ได้ public URL สำหรับไฟล์
+    // ได้ public URL สำหรับไฟล์ โดยไม่มี transformation
     const { data: { publicUrl } } = supabase.storage
       .from('documents')
       .getPublicUrl(data.path);

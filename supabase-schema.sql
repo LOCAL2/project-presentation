@@ -78,3 +78,51 @@ CREATE POLICY "Allow delete for all users" ON categories FOR DELETE USING (true)
 CREATE POLICY "Allow insert for all users" ON documents FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow update for all users" ON documents FOR UPDATE USING (true);
 CREATE POLICY "Allow delete for all users" ON documents FOR DELETE USING (true);
+
+-- สร้างตาราง members สำหรับข้อมูลสมาชิกทีม
+CREATE TABLE members (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  nickname TEXT,
+  student_id TEXT,
+  role TEXT NOT NULL,
+  email TEXT NOT NULL,
+  avatar_url TEXT,
+  order_index INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- สร้าง index สำหรับการเรียงลำดับ
+CREATE INDEX idx_members_order ON members(order_index);
+
+-- สร้าง trigger สำหรับ members
+CREATE TRIGGER update_members_updated_at 
+    BEFORE UPDATE ON members 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- สร้าง Storage bucket สำหรับเก็บรูปโปรไฟล์
+INSERT INTO storage.buckets (id, name, public) VALUES ('members', 'members', true);
+
+-- สร้าง policy สำหรับ Storage
+CREATE POLICY "Allow public read access on members bucket" ON storage.objects FOR SELECT USING (bucket_id = 'members');
+CREATE POLICY "Allow public upload to members bucket" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'members');
+CREATE POLICY "Allow public delete from members bucket" ON storage.objects FOR DELETE USING (bucket_id = 'members');
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE members ENABLE ROW LEVEL SECURITY;
+
+-- สร้าง policy สำหรับการอ่านข้อมูล (อนุญาตทุกคน)
+CREATE POLICY "Allow read access for all users" ON members FOR SELECT USING (true);
+
+-- สร้าง policy สำหรับการเขียนข้อมูล (อนุญาตทุกคน - สำหรับ demo)
+CREATE POLICY "Allow insert for all users" ON members FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow update for all users" ON members FOR UPDATE USING (true);
+CREATE POLICY "Allow delete for all users" ON members FOR DELETE USING (true);
+
+-- เพิ่มข้อมูลสมาชิกตัวอย่าง
+INSERT INTO members (name, nickname, student_id, role, email, order_index) VALUES 
+('นายสมชาย ใจดี', 'ชาย', '65010001', 'Project Manager', 'somchai@example.com', 0),
+('นางสาวสมหญิง รักเรียน', 'หญิง', '65010002', 'Developer', 'somying@example.com', 1),
+('นายสมศักดิ์ ขยันเรียน', 'ศักดิ์', '65010003', 'Designer', 'somsak@example.com', 2);

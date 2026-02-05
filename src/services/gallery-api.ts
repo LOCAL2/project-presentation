@@ -81,14 +81,20 @@ export const galleryApi = {
       .from('gallery')
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: false,
+        contentType: file.type
       });
 
     if (uploadError) throw new Error(`Failed to upload file: ${uploadError.message}`);
 
+    // ใช้ getPublicUrl โดยไม่มี transformation เพื่อรักษาคุณภาพเดิม
     const { data } = supabase.storage
       .from('gallery')
-      .getPublicUrl(filePath);
+      .getPublicUrl(filePath, {
+        transform: {
+          quality: 100 // คุณภาพสูงสุด
+        }
+      });
 
     return data.publicUrl;
   },

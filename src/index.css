@@ -16,6 +16,13 @@ body {
   height: 100vh;
 }
 
+/* Global Image Quality Settings */
+img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  -ms-interpolation-mode: bicubic;
+}
+
 /* React PDF Styles */
 .react-pdf__Page__textContent {
   user-select: text;

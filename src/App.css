@@ -2055,3 +2055,22 @@ body {
     max-height: 60vh;
   }
 }
+/* Member nickname and student ID styles */
+.member-nickname {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: 0.9em;
+  margin-left: 0.5rem;
+}
+
+.member-student-id {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+  background: #f9fafb;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  display: inline-block;
+}
