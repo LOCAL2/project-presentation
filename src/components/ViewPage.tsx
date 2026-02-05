@@ -74,7 +74,7 @@ export const ViewPage = () => {
               console.error('Error updating category:', err);
             }
           }
-        }
+        } 
         
         setError(null);
       } catch (err) {

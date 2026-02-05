@@ -1,29 +1,50 @@
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { membersApi, type Member } from '../services/members-api';
+import { supabase } from '../lib/supabase';
 
 export const MembersPage = () => {
-  const members = [
-    {
-      id: 1,
-      name: 'ภูมิรพี พรหมมาศ',
-      role: 'Project Design',
-      email: '66209010037@tnk.ac.th',
-      avatar: 'Poom'
-    },
-    {
-      id: 2,
-      name: 'นภัสพล ผู้แสนสะอาด',
-      role: 'Project Manager',
-      email: '66209010031@tnk.ac.th',
-      avatar: 'ST'
-    },
-    {
-      id: 3,
-      name: 'วรเดช พันธ์พืช',
-      role: 'Coding',
-      email: '66209010040@tnk.ac.th',
-      avatar: 'WR'
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadMembers();
+
+    const subscription = supabase
+      .channel('members-changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'members' },
+        () => {
+          membersApi.getAll().then(setMembers).catch(console.error);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, []);
+
+  const loadMembers = async () => {
+    try {
+      setLoading(true);
+      const data = await membersApi.getAll();
+      setMembers(data);
+    } catch (err) {
+      console.error('Error loading members:', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-message">
+        <div className="loading-spinner"></div>
+        <p>กำลังโหลดข้อมูล...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="members-container">
@@ -41,7 +62,20 @@ export const MembersPage = () => {
           {members.map((member) => (
             <div key={member.id} className="member-card">
               <div className="member-avatar">
-                {member.avatar}
+                {member.avatarUrl ? (
+                  <img 
+                    src={member.avatarUrl} 
+                    alt={member.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: '50%'
+                    }}
+                  />
+                ) : (
+                  member.name.charAt(0)
+                )}
               </div>
               <div className="member-info">
                 <h3 className="member-name">{member.name}</h3>

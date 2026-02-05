@@ -20,6 +20,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { documentsApi, categoriesApi, type Document, type Category } from '../services/supabase-api';
 import { supabase } from '../lib/supabase';
 import { storageApi } from '../services/storage';
+import { ManageGallery } from './ManageGallery';
+import { ManageMembers } from './ManageMembers';
 
 // Sortable Document Card Component
 function SortableDocumentCard({ 
@@ -84,6 +86,7 @@ function SortableDocumentCard({
 }
 
 export const ManagePage = () => {
+  const [activeTab, setActiveTab] = useState<'documents' | 'gallery' | 'members'>('documents');
   const [documents, setDocuments] = useState<Document[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -392,30 +395,72 @@ export const ManagePage = () => {
         <div className="manage-header__left">
           <Link to="/data" className="manage-back-btn">←</Link>
           <div className="manage-header__title-group">
-            <h1 className="manage-header__title">จัดการเอกสาร</h1>
-            <p className="manage-header__subtitle">{documents.length} เอกสารทั้งหมด</p>
+            <h1 className="manage-header__title">จัดการเนื้อหา</h1>
+            <p className="manage-header__subtitle">
+              {activeTab === 'documents' 
+                ? `${documents.length} เอกสารทั้งหมด` 
+                : activeTab === 'gallery'
+                ? 'แกลเลอรี่รูปภาพและวิดีโอ'
+                : 'จัดการสมาชิกทีม'}
+            </p>
           </div>
         </div>
         
         <div className="manage-header__right">
-          <input
-            type="text"
-            placeholder="ค้นหาเอกสาร..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="manage-search-input"
-          />
-          <Link to="/data" className="manage-btn manage-btn--secondary">
-            👁️ ดูเอกสาร
-          </Link>
-          <button 
-            className="manage-btn manage-btn--primary"
-            onClick={() => setShowAddModal(true)}
-          >
-            + เพิ่มเอกสาร
-          </button>
+          {activeTab === 'documents' && (
+            <>
+              <input
+                type="text"
+                placeholder="ค้นหาเอกสาร..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="manage-search-input"
+              />
+              <Link to="/data" className="manage-btn manage-btn--secondary">
+                👁️ ดูเอกสาร
+              </Link>
+              <button 
+                className="manage-btn manage-btn--primary"
+                onClick={() => setShowAddModal(true)}
+              >
+                + เพิ่มเอกสาร
+              </button>
+            </>
+          )}
+          {activeTab === 'gallery' && (
+            <Link to="/picture" className="manage-btn manage-btn--secondary">
+              👁️ ดูแกลเลอรี่
+            </Link>
+          )}
+          {activeTab === 'members' && (
+            <Link to="/members" className="manage-btn manage-btn--secondary">
+              👁️ ดูสมาชิก
+            </Link>
+          )}
         </div>
       </header>
+
+      {/* Tabs */}
+      <div className="manage-tabs">
+        <button
+          className={`manage-tab ${activeTab === 'documents' ? 'manage-tab--active' : ''}`}
+          onClick={() => setActiveTab('documents')}
+        >
+          📄 เอกสาร
+        </button>
+        <button
+          className={`manage-tab ${activeTab === 'gallery' ? 'manage-tab--active' : ''}`}
+          onClick={() => setActiveTab('gallery')}
+        >
+          📸 แกลเลอรี่
+        </button>
+        <button
+          className={`manage-tab ${activeTab === 'members' ? 'manage-tab--active' : ''}`}
+          onClick={() => setActiveTab('members')}
+        >
+          👥 สมาชิก
+        </button>
+      </div>
 
       {/* Error Alert */}
       {error && (
@@ -427,15 +472,20 @@ export const ManagePage = () => {
 
       {/* Main Content */}
       <main className="manage-content">
-        <DndContext 
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext 
-            items={documents.map(doc => doc.id)}
-            strategy={verticalListSortingStrategy}
+        {activeTab === 'members' ? (
+          <ManageMembers />
+        ) : activeTab === 'gallery' ? (
+          <ManageGallery />
+        ) : (
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
           >
+            <SortableContext 
+              items={documents.map(doc => doc.id)}
+              strategy={verticalListSortingStrategy}
+            >
             {/* Uncategorized Documents */}
             {filteredUncategorized.length > 0 && (
               <section className="manage-section">
@@ -539,8 +589,9 @@ export const ManagePage = () => {
                 )}
               </div>
             )}
-          </SortableContext>
-        </DndContext>
+            </SortableContext>
+          </DndContext>
+        )}
       </main>
 
       {/* Add Document Modal */}
