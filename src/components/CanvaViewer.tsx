@@ -8,6 +8,12 @@ interface CanvaViewerProps {
 export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }: CanvaViewerProps) => {
   // แปลง Canva URL ให้เป็น embed URL
   const getEmbedUrl = (url: string): string => {
+    // ถ้าเป็น Canva Site URL (xxx.my.canva.site)
+    if (url.includes('.my.canva.site')) {
+      // ใช้ URL โดยตรง เพราะเป็น published website แล้ว
+      return url;
+    }
+    
     // ถ้าเป็น embed URL อยู่แล้ว ให้ใช้เลย
     if (url.includes('/embed')) {
       return url;
@@ -24,6 +30,7 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
   };
 
   const embedUrl = getEmbedUrl(canvaUrl);
+  const isCanvaSite = canvaUrl.includes('.my.canva.site');
 
   return (
     <div className="canva-viewer">
@@ -58,7 +65,13 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
           allow="fullscreen"
           className="canva-iframe"
           title={title}
+          loading="lazy"
         />
+        {isCanvaSite && (
+          <div className="canva-hint">
+            💡 กด fullscreen icon ที่มุมขวาล่างเพื่อดูแบบเต็มจอ
+          </div>
+        )}
       </div>
     </div>
   );

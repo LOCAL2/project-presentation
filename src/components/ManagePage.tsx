@@ -642,11 +642,12 @@ export const ManagePage = () => {
                     value={canvaUrl}
                     onChange={(e) => setCanvaUrl(e.target.value)}
                     className="manage-form-input"
-                    placeholder="https://www.canva.com/design/..."
+                    placeholder="https://xxx.my.canva.site/xxx หรือ https://www.canva.com/design/..."
                     required
                   />
                   <p className="manage-form-hint">
-                    💡 วิธีการ: เปิด Canva → คลิก Share → คลิก "More" → เลือก "Website" → คัดลอก URL
+                    💡 วิธีการ: เปิด Canva → คลิก Share → คลิก "Website" → คัดลอก URL<br/>
+                    รองรับทั้ง Canva Site URL (xxx.my.canva.site) และ Design URL
                   </p>
                 </div>
               )}
