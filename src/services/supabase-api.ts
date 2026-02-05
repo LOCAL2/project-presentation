@@ -33,8 +33,18 @@ export const documentsApi = {
         .select('id, title, path, category_id, order_index')
         .order('order_index', { ascending: true });
       
-      data = fallback.data;
-      error = fallback.error;
+      if (fallback.error) throw new Error(`Failed to fetch documents: ${fallback.error.message}`);
+      if (!fallback.data) return [];
+      
+      return fallback.data.map(doc => ({
+        id: doc.id,
+        title: doc.title,
+        path: doc.path,
+        category: doc.category_id || undefined,
+        order: doc.order_index,
+        type: 'pdf' as const,
+        canvaUrl: undefined
+      }));
     }
 
     if (error) throw new Error(`Failed to fetch documents: ${error.message}`);
@@ -83,8 +93,18 @@ export const documentsApi = {
         .select('id, title, path, category_id, order_index')
         .single();
       
-      data = fallback.data;
-      error = fallback.error;
+      if (fallback.error) throw new Error(`Failed to create document: ${fallback.error.message}`);
+      if (!fallback.data) throw new Error('No data returned from create');
+      
+      return {
+        id: fallback.data.id,
+        title: fallback.data.title,
+        path: fallback.data.path,
+        category: fallback.data.category_id || undefined,
+        order: fallback.data.order_index,
+        type: 'pdf' as const,
+        canvaUrl: undefined
+      };
     }
 
     if (error) throw new Error(`Failed to create document: ${error.message}`);
@@ -133,8 +153,18 @@ export const documentsApi = {
         .select('id, title, path, category_id, order_index')
         .single();
       
-      data = fallback.data;
-      error = fallback.error;
+      if (fallback.error) throw new Error(`Failed to update document: ${fallback.error.message}`);
+      if (!fallback.data) throw new Error('No data returned from update');
+      
+      return {
+        id: fallback.data.id,
+        title: fallback.data.title,
+        path: fallback.data.path,
+        category: fallback.data.category_id || undefined,
+        order: fallback.data.order_index,
+        type: 'pdf' as const,
+        canvaUrl: undefined
+      };
     }
 
     if (error) throw new Error(`Failed to update document: ${error.message}`);
