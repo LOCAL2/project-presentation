@@ -7,11 +7,7 @@ export const HomePage = () => {
         <div className="home-hero">
           <h1 className="home-title">Smoke Detect</h1>
           <p className="home-subtitle">
-            ระบบจัดการและแสดงเอกสารออนไลน์
-          </p>
-          <p className="home-description">
-            เข้าถึงเอกสาร PDF และ Canva Presentation ได้ง่ายๆ<br/>
-            พร้อมระบบจัดการหมวดหมู่ที่ใช้งานสะดวก
+            เครื่องตรวจจับควัน
           </p>
         </div>
 
@@ -27,13 +23,6 @@ export const HomePage = () => {
             เริ่มต้นใช้งาน
           </Link>
           
-          <Link to="/manage" className="home-btn home-btn--secondary">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-            </svg>
-            จัดการเอกสาร
-          </Link>
-
           <Link to="/members" className="home-btn home-btn--secondary">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -43,32 +32,6 @@ export const HomePage = () => {
             </svg>
             สมาชิกทีม
           </Link>
-        </div>
-
-        <div className="home-features">
-          <div className="home-feature">
-            <div className="home-feature-icon">📄</div>
-            <h3 className="home-feature-title">PDF Viewer</h3>
-            <p className="home-feature-description">
-              แสดงเอกสาร PDF แบบเต็มหน้าจอ พร้อมระบบเลื่อนดูหน้าถัดไป
-            </p>
-          </div>
-
-          <div className="home-feature">
-            <div className="home-feature-icon">🎨</div>
-            <h3 className="home-feature-title">Canva Integration</h3>
-            <p className="home-feature-description">
-              รองรับการแสดง Canva Presentation แบบ embedded
-            </p>
-          </div>
-
-          <div className="home-feature">
-            <div className="home-feature-icon">📁</div>
-            <h3 className="home-feature-title">จัดการหมวดหมู่</h3>
-            <p className="home-feature-description">
-              จัดระเบียบเอกสารด้วยระบบหมวดหมู่ที่ใช้งานง่าย
-            </p>
-          </div>
         </div>
       </div>
     </div>

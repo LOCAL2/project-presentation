@@ -38,6 +38,7 @@ export const documentsApi = {
     }
 
     if (error) throw new Error(`Failed to fetch documents: ${error.message}`);
+    if (!data) return [];
     
     return data.map(doc => ({
       id: doc.id,
@@ -87,6 +88,7 @@ export const documentsApi = {
     }
 
     if (error) throw new Error(`Failed to create document: ${error.message}`);
+    if (!data) throw new Error('No data returned from create');
     
     return {
       id: data.id,
@@ -136,6 +138,7 @@ export const documentsApi = {
     }
 
     if (error) throw new Error(`Failed to update document: ${error.message}`);
+    if (!data) throw new Error('No data returned from update');
     
     return {
       id: data.id,
