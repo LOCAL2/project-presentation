@@ -502,6 +502,33 @@ body {
 .next-button-container {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
+}
+
+.members-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f9fafb;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.members-link-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.members-link-btn svg {
+  flex-shrink: 0;
 }
 
 .next-document-btn {
@@ -670,7 +697,6 @@ body {
   color: #3b82f6;
 }
 
-/* เพิ่ม loading animation */
 .pdf-loading::after {
   content: '';
   width: 40px;
@@ -702,7 +728,6 @@ body {
   color: #3b82f6;
 }
 
-/* Styling สำหรับเนื้อหาจาก Word */
 .docx-content {
   line-height: 1.8;
   color: #374151;
@@ -754,7 +779,6 @@ body {
   font-weight: bold;
 }
 
-/* Mobile Improvements */
 .mobile-header {
   display: none;
   background: #ffffff;
@@ -815,7 +839,6 @@ body {
   display: block;
 }
 
-/* Enhanced Loading State */
 .loading-message {
   display: flex;
   flex-direction: column;
@@ -867,7 +890,6 @@ body {
   100% { width: 100%; }
 }
 
-/* Enhanced PDF Loading */
 .pdf-loading {
   display: flex;
   flex-direction: column;
@@ -890,7 +912,6 @@ body {
   60% { transform: translateY(-5px); }
 }
 
-/* Loading และ Error States */
 .loading-message,
 .error-message {
   display: flex;
@@ -930,7 +951,6 @@ body {
   margin: 0.5rem 0;
 }
 
-/* Disabled button styles */
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -948,7 +968,6 @@ body {
   color: #9ca3af;
 }
 
-/* Mobile/Desktop Text Toggle */
 .desktop-text {
   display: inline;
 }
@@ -1017,6 +1036,12 @@ body {
 
   .next-button-container {
     flex-shrink: 0;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .members-link-btn .desktop-text {
+    display: none;
   }
 
   .page-info {

@@ -22,13 +22,6 @@ export const MembersPage = () => {
       role: 'Designer',
       email: 'wichai@example.com',
       avatar: 'WC'
-    },
-    {
-      id: 4,
-      name: 'สุดา ขยัน',
-      role: 'Tester',
-      email: 'suda@example.com',
-      avatar: 'SD'
     }
   ];
 

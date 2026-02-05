@@ -44,7 +44,7 @@ export const NotFound = () => {
 
         <h1 className="notfound-title">ไม่พบหน้าที่คุณต้องการ</h1>
         <p className="notfound-description">
-          ขอโทษค่ะ หน้าที่คุณกำลังมองหาอาจถูกย้าย ลบ หรือไม่เคยมีอยู่จริง
+          หน้าที่คุณกำลังมองหาอาจถูกย้าย ลบ หรือไม่เคยมีอยู่จริง
         </p>
         
         <div className="notfound-actions">

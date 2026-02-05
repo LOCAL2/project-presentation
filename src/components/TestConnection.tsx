@@ -8,12 +8,10 @@ export const TestConnection = () => {
   const testConnection = async () => {
     setLoading(true);
     try {
-      // ทดสอบดึงข้อมูล categories
       const { data: categories, error: catError } = await supabase
         .from('categories')
         .select('*');
 
-      // ทดสอบดึงข้อมูล documents
       const { data: documents, error: docError } = await supabase
         .from('documents')
         .select('*');

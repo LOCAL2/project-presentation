@@ -3,7 +3,6 @@ import { PdfViewer } from './PdfViewer';
 import { documentsApi, categoriesApi, type Document, type Category } from '../services/supabase-api';
 import { supabase } from '../lib/supabase';
 
-// Sortable Item Component สำหรับหน้า View (ไม่มี drag & drop)
 function SortableItem({ 
   doc, 
   isSelected, 
@@ -44,7 +43,6 @@ export const ViewPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // โหลดข้อมูลเริ่มต้น
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -55,13 +53,10 @@ export const ViewPage = () => {
         ]);
         setDocuments(docsData);
         setCategories(catsData);
-        
-        // เลือกเอกสารแรก (ปก) โดยอัตโนมัติ
         if (docsData.length > 0) {
           const firstDoc = docsData[0];
           setSelectedDoc(firstDoc);
-          
-          // ถ้าเอกสารแรกอยู่ในหมวดหมู่ ให้ขยายหมวดหมู่นั้นด้วย
+
           if (firstDoc.category) {
             const updatedCats = catsData.map(cat => 
               cat.id === firstDoc.category 
@@ -69,8 +64,7 @@ export const ViewPage = () => {
                 : cat
             );
             setCategories(updatedCats);
-            
-            // อัพเดทสถานะใน Supabase
+
             try {
               await categoriesApi.update(firstDoc.category, { expanded: true });
             } catch (err) {
@@ -90,7 +84,6 @@ export const ViewPage = () => {
 
     loadData();
 
-    // Subscribe to real-time changes
     const documentsSubscription = supabase
       .channel('documents-changes-view')
       .on('postgres_changes', 
@@ -113,7 +106,6 @@ export const ViewPage = () => {
       )
       .subscribe();
 
-    // Cleanup subscriptions
     return () => {
       supabase.removeChannel(documentsSubscription);
       supabase.removeChannel(categoriesSubscription);
@@ -148,9 +140,8 @@ export const ViewPage = () => {
 
   const handleDocumentSelect = async (doc: Document) => {
     setSelectedDoc(doc);
-    setIsMobileMenuOpen(false); // ปิดเมนูมือถือเมื่อเลือกเอกสาร
-    
-    // ถ้าเอกสารอยู่ในหมวดหมู่ ให้ขยายหมวดหมู่นั้นโดยอัตโนมัติ
+    setIsMobileMenuOpen(false); 
+
     if (doc.category) {
       const category = categories.find(cat => cat.id === doc.category);
       if (category && !category.expanded) {
@@ -248,7 +239,6 @@ export const ViewPage = () => {
     );
   }
 
-  // เช็คว่ามีข้อมูลหรือไม่
   const hasDocuments = documents.length > 0;
   const hasCategories = categories.length > 0;
 
@@ -261,7 +251,6 @@ export const ViewPage = () => {
 
   return (
     <div className="app-container">
-      {/* Mobile Header */}
       <header className="mobile-header">
         <div className="mobile-header__content">
           <h1 className="mobile-header__title">
@@ -280,7 +269,6 @@ export const ViewPage = () => {
         </div>
       </header>
 
-      {/* Sidebar Overlay for Mobile */}
       <div 
         className={`sidebar-overlay ${isMobileMenuOpen ? 'active' : ''}`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -320,7 +308,6 @@ export const ViewPage = () => {
           </div>
         ) : (
           <nav className="doc-list">
-          {/* เอกสารที่ไม่มีหมวดหมู่ */}
           {getUncategorizedDocuments().map((doc) => (
             <SortableItem
               key={doc.id}
@@ -330,7 +317,6 @@ export const ViewPage = () => {
             />
           ))}
 
-          {/* หมวดหมู่และเอกสารในหมวดหมู่ */}
           {categories.map((category) => (
             <div key={category.id} className="category-section">
               <button
