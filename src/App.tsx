@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { HomePage } from './components/HomePage';
 import { ViewPage } from './components/ViewPage';
 import { ManagePage } from './components/ManagePage';
 import { TestConnection } from './components/TestConnection';
@@ -10,7 +11,8 @@ import './styles/manage-pro.css';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<ViewPage />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/data" element={<ViewPage />} />
       <Route path="/manage" element={<ManagePage />} />
       <Route path="/members" element={<MembersPage />} />
       <Route path="/test" element={<TestConnection />} />

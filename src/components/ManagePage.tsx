@@ -390,7 +390,7 @@ export const ManagePage = () => {
       {/* Header */}
       <header className="manage-header">
         <div className="manage-header__left">
-          <Link to="/" className="manage-back-btn">←</Link>
+          <Link to="/data" className="manage-back-btn">←</Link>
           <div className="manage-header__title-group">
             <h1 className="manage-header__title">จัดการเอกสาร</h1>
             <p className="manage-header__subtitle">{documents.length} เอกสารทั้งหมด</p>
@@ -405,7 +405,7 @@ export const ManagePage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="manage-search-input"
           />
-          <Link to="/" className="manage-btn manage-btn--secondary">
+          <Link to="/data" className="manage-btn manage-btn--secondary">
             👁️ ดูเอกสาร
           </Link>
           <button 
