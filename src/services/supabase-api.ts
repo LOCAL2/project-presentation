@@ -20,10 +20,22 @@ export interface Category {
 export const documentsApi = {
   // ดึงเอกสารทั้งหมด (เพิ่ม caching)
   async getAll(): Promise<Document[]> {
-    const { data, error } = await supabase
+    // ลองดึงข้อมูลพร้อมฟิลด์ใหม่ก่อน
+    let { data, error } = await supabase
       .from('documents')
       .select('id, title, path, category_id, order_index, type, canva_url')
       .order('order_index', { ascending: true });
+
+    // ถ้า error เพราะไม่มีฟิลด์ type/canva_url ให้ดึงแบบเก่า
+    if (error && error.message.includes('does not exist')) {
+      const fallback = await supabase
+        .from('documents')
+        .select('id, title, path, category_id, order_index')
+        .order('order_index', { ascending: true });
+      
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw new Error(`Failed to fetch documents: ${error.message}`);
     
@@ -33,25 +45,46 @@ export const documentsApi = {
       path: doc.path,
       category: doc.category_id || undefined,
       order: doc.order_index,
-      type: doc.type || 'pdf',
-      canvaUrl: doc.canva_url || undefined
+      type: (doc as any).type || 'pdf',
+      canvaUrl: (doc as any).canva_url || undefined
     }));
   },
 
   // เพิ่มเอกสารใหม่
   async create(document: Omit<Document, 'id'>): Promise<Document> {
-    const { data, error } = await supabase
+    const insertData: any = {
+      title: document.title,
+      path: document.path,
+      category_id: document.category || null,
+      order_index: document.order
+    };
+
+    // เพิ่มฟิลด์ใหม่ถ้ามี
+    if (document.type) insertData.type = document.type;
+    if (document.canvaUrl) insertData.canva_url = document.canvaUrl;
+
+    let { data, error } = await supabase
       .from('documents')
-      .insert({
-        title: document.title,
-        path: document.path,
-        category_id: document.category || null,
-        order_index: document.order,
-        type: document.type || 'pdf',
-        canva_url: document.canvaUrl || null
-      })
+      .insert(insertData)
       .select('id, title, path, category_id, order_index, type, canva_url')
       .single();
+
+    // ถ้า error เพราะไม่มีฟิลด์ type/canva_url ให้ insert แบบเก่า
+    if (error && error.message.includes('does not exist')) {
+      const fallback = await supabase
+        .from('documents')
+        .insert({
+          title: document.title,
+          path: document.path,
+          category_id: document.category || null,
+          order_index: document.order
+        })
+        .select('id, title, path, category_id, order_index')
+        .single();
+      
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw new Error(`Failed to create document: ${error.message}`);
     
@@ -61,8 +94,8 @@ export const documentsApi = {
       path: data.path,
       category: data.category_id || undefined,
       order: data.order_index,
-      type: data.type || 'pdf',
-      canvaUrl: data.canva_url || undefined
+      type: (data as any).type || 'pdf',
+      canvaUrl: (data as any).canva_url || undefined
     };
   },
 
@@ -76,12 +109,31 @@ export const documentsApi = {
     if (document.type !== undefined) updateData.type = document.type;
     if (document.canvaUrl !== undefined) updateData.canva_url = document.canvaUrl;
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('documents')
       .update(updateData)
       .eq('id', id)
       .select('id, title, path, category_id, order_index, type, canva_url')
       .single();
+
+    // ถ้า error เพราะไม่มีฟิลด์ type/canva_url ให้ update แบบเก่า
+    if (error && error.message.includes('does not exist')) {
+      const oldUpdateData: any = {};
+      if (document.title !== undefined) oldUpdateData.title = document.title;
+      if (document.path !== undefined) oldUpdateData.path = document.path;
+      if (document.category !== undefined) oldUpdateData.category_id = document.category;
+      if (document.order !== undefined) oldUpdateData.order_index = document.order;
+
+      const fallback = await supabase
+        .from('documents')
+        .update(oldUpdateData)
+        .eq('id', id)
+        .select('id, title, path, category_id, order_index')
+        .single();
+      
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) throw new Error(`Failed to update document: ${error.message}`);
     
@@ -91,8 +143,8 @@ export const documentsApi = {
       path: data.path,
       category: data.category_id || undefined,
       order: data.order_index,
-      type: data.type || 'pdf',
-      canvaUrl: data.canva_url || undefined
+      type: (data as any).type || 'pdf',
+      canvaUrl: (data as any).canva_url || undefined
     };
   },
 
