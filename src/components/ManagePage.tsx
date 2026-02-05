@@ -233,6 +233,12 @@ export const ManagePage = () => {
     if (documentType === 'pdf' && !file) return;
     if (documentType === 'canva' && !canvaUrl.trim()) return;
 
+    // ตรวจสอบว่าถ้าเป็น Canva แต่ database ยังไม่รองรับ
+    if (documentType === 'canva') {
+      setError('⚠️ กรุณารัน SQL Migration ใน Supabase ก่อนใช้ฟีเจอร์ Canva (ดูไฟล์ CANVA_SETUP.md)');
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -274,7 +280,13 @@ export const ManagePage = () => {
       setError(null);
     } catch (err) {
       console.error('Error adding document:', err);
-      setError('ไม่สามารถเพิ่มเอกสารได้');
+      const errorMessage = err instanceof Error ? err.message : 'ไม่สามารถเพิ่มเอกสารได้';
+      
+      if (errorMessage.includes('canva_url') || errorMessage.includes('type')) {
+        setError('⚠️ Database ยังไม่รองรับ Canva - กรุณารัน SQL Migration ก่อน (ดูไฟล์ CANVA_SETUP.md)');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
