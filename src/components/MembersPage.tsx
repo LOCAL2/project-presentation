@@ -71,7 +71,7 @@ export const MembersPage = () => {
           justifyContent: 'center',
           alignItems: 'flex-start'
         }}>
-          {members.map((member, index) => (
+          {members.map((member) => (
             <div 
               key={member.id} 
               className="member-card"

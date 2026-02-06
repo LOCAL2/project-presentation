@@ -231,7 +231,7 @@ export const ManageMembers = () => {
             justifyContent: 'center',
             alignItems: 'flex-start'
           }}>
-            {members.map((member, index) => (
+            {members.map((member) => (
               <div 
                 key={member.id} 
                 className="manage-gallery-card"
