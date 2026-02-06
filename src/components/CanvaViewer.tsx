@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 interface CanvaViewerProps {
   canvaUrl: string;
   title: string;
@@ -6,6 +8,13 @@ interface CanvaViewerProps {
 }
 
 export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }: CanvaViewerProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Reset loading state เมื่อ canvaUrl เปลี่ยน
+  useEffect(() => {
+    setIsLoading(true);
+  }, [canvaUrl]);
+
   // แปลง Canva Site URL เป็น embed URL
   const getEmbedUrl = (url: string): string => {
     // ถ้าเป็น Canva Site URL (xxx.my.canva.site/xxx)
@@ -29,6 +38,10 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
 
   const embedUrl = getEmbedUrl(canvaUrl);
   const isCanvaSite = canvaUrl.includes('.my.canva.site');
+
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+  };
 
   return (
     <div className="canva-viewer">
@@ -57,16 +70,27 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
       </div>
 
       <div className="canva-container">
+        {isLoading && (
+          <div className="pdf-loading">
+            <div>กำลังโหลด Canva...</div>
+            <div style={{ fontSize: '0.9rem', marginTop: '0.5rem', opacity: 0.7 }}>
+              {title}
+            </div>
+          </div>
+        )}
         <iframe
+          key={canvaUrl}
           src={embedUrl}
           allowFullScreen
           allow="fullscreen"
           className="canva-iframe"
           title={title}
-          loading="lazy"
+          loading="eager"
           sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+          onLoad={handleIframeLoad}
+          style={{ display: isLoading ? 'none' : 'block' }}
         />
-        {isCanvaSite && (
+        {isCanvaSite && !isLoading && (
           <div className="canva-fallback-overlay">
             <div className="canva-fallback-content">
               <p className="canva-fallback-text">

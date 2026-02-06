@@ -252,17 +252,13 @@ export const ManageMembers = () => {
               }}>
                 {member.avatarUrl ? (
                   <img 
-                    src={`${member.avatarUrl}?width=200&height=200&resize=cover&quality=90`} 
+                    src={member.avatarUrl} 
                     alt={member.name} 
                     style={{ 
                       width: '100%', 
                       height: '100%', 
-                      objectFit: 'cover',
-                      imageRendering: 'high-quality',
-                      filter: 'contrast(1.05) brightness(1.02)'
+                      objectFit: 'cover'
                     }}
-                    loading="eager"
-                    decoding="async"
                   />
                 ) : (
                   <div style={{ 

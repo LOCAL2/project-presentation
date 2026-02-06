@@ -50,7 +50,7 @@ export const MembersPage = () => {
     <div className="members-container">
       <div className="members-header">
         <div className="members-header-content">
-          <Link to="/" className="back-link">
+          <Link to="/data" className="back-link">
             ←
           </Link>
           <h1>สมาชิกทีม</h1>
@@ -86,18 +86,14 @@ export const MembersPage = () => {
               <div className="member-avatar">
                 {member.avatarUrl ? (
                   <img 
-                    src={`${member.avatarUrl}?width=200&height=200&resize=cover&quality=90`}
+                    src={member.avatarUrl}
                     alt={member.name}
                     style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      borderRadius: '50%',
-                      imageRendering: 'high-quality',
-                      filter: 'contrast(1.05) brightness(1.02)'
+                      borderRadius: '50%'
                     }}
-                    loading="eager"
-                    decoding="async"
                   />
                 ) : (
                   member.name.charAt(0)

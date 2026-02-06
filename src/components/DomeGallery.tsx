@@ -482,12 +482,9 @@ export default function DomeGallery({
                   onClick={onTileClick}
                 >
                   <img 
-                    src={it.src} 
+                    src={it.src}
                     draggable={false} 
                     alt={it.alt}
-                    loading="eager"
-                    decoding="async"
-                    fetchPriority={i < 20 ? "high" : "auto"}
                   />
                 </div>
               </div>

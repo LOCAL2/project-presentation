@@ -152,7 +152,7 @@ export const membersApi = {
     const { error: uploadError } = await supabase.storage
       .from('members')
       .upload(filePath, file, {
-        cacheControl: '3600',
+        cacheControl: 'public, max-age=31536000, immutable',
         upsert: false,
         contentType: file.type
       });
