@@ -20,6 +20,24 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
   const [isLoading, setIsLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
 
+  const handleDownload = async (): Promise<void> => {
+    try {
+      const response = await fetch(filePath);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('ไม่สามารถดาวน์โหลดไฟล์ได้');
+    }
+  };
+
   // Memoize options เพื่อป้องกัน unnecessary reloads
   const options = useMemo(() => ({
     cMapUrl: `https://unpkg.com/pdfjs-dist@5.4.296/cmaps/`,
@@ -182,12 +200,20 @@ export const PdfViewer = ({ filePath, title, onNextDocument, hasNextDocument }: 
               <span className="desktop-text">ไปยังบทถัดไป →</span>
               <span className="mobile-text">ถัดไป →</span>
             </button>
-          ) : (
+          ) : !isLastPage ? (
             <span className="next-page-text">
               <span className="desktop-text">เลื่อนลงเพื่อดูหน้าถัดไป</span>
               <span className="mobile-text">เลื่อนลง</span>
             </span>
-          )}
+          ) : null}
+          <button className="download-btn-control" onClick={handleDownload} title="ดาวน์โหลด PDF">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span className="desktop-text">ดาวน์โหลด</span>
+          </button>
           <a href="/members" className="members-link-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>

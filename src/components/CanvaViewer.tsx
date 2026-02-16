@@ -15,6 +15,10 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
     setIsLoading(true);
   }, [canvaUrl]);
 
+  const handleDownload = (): void => {
+    window.open(canvaUrl, '_blank');
+  };
+
   // แปลง Canva Site URL เป็น embed URL
   const getEmbedUrl = (url: string): string => {
     // ถ้าเป็น Canva Site URL (xxx.my.canva.site/xxx)
@@ -57,6 +61,14 @@ export const CanvaViewer = ({ canvaUrl, title, onNextDocument, hasNextDocument }
               <span className="mobile-text">ถัดไป →</span>
             </button>
           )}
+          <button className="download-btn-control" onClick={handleDownload} title="เปิด Canva ในแท็บใหม่">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span className="desktop-text">เปิดใน Canva</span>
+          </button>
           <a href="/members" className="members-link-btn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>

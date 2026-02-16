@@ -556,6 +556,33 @@ body {
   flex-shrink: 0;
 }
 
+.download-btn-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f9fafb;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.download-btn-control:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
+}
+
+.download-btn-control svg {
+  flex-shrink: 0;
+}
+
 .next-document-btn {
   background: #1f2937;
   color: white;

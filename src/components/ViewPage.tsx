@@ -170,8 +170,17 @@ export const ViewPage = () => {
     const currentIndex = documents.findIndex(doc => doc.id === selectedDoc.id);
     const nextIndex = currentIndex + 1;
     
+    console.log('handleNextDocument called:', {
+      currentDoc: selectedDoc.title,
+      currentIndex,
+      nextIndex,
+      totalDocs: documents.length,
+      allDocs: documents.map(d => d.title)
+    });
+    
     if (nextIndex < documents.length) {
       const nextDoc = documents[nextIndex];
+      console.log('Moving to next document:', nextDoc.title);
       setSelectedDoc(nextDoc);
         
       if (nextDoc.category) {
