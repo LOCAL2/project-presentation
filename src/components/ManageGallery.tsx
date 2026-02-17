@@ -47,6 +47,14 @@ export const ManageGallery = () => {
     }
   };
 
+  // คำนวณ hash ของไฟล์เพื่อตรวจสอบความซ้ำ
+  const calculateFileHash = async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const convertHeicToJpeg = async (file: File): Promise<File> => {
     try {
       const convertedBlob = await heic2any({
@@ -77,43 +85,99 @@ export const ManageGallery = () => {
       setUploadProgress(0);
 
       const maxOrder = Math.max(...items.map(item => item.order), -1);
-      const newItems: GalleryItem[] = [];
+      
+      // คำนวณ hash ของไฟล์ที่มีอยู่แล้วในระบบ
+      setUploadProgress(5);
+      const existingHashes = new Set<string>();
+      
+      // ดึง URL ของรูปที่มีอยู่แล้วและคำนวณ hash (ทำแบบ parallel)
+      await Promise.all(
+        items.slice(0, 50).map(async (item) => { // จำกัดแค่ 50 รายการล่าสุดเพื่อความเร็ว
+          try {
+            const response = await fetch(item.fileUrl);
+            const blob = await response.blob();
+            const buffer = await blob.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            existingHashes.add(hash);
+          } catch (err) {
+            console.error('Error hashing existing file:', err);
+          }
+        })
+      );
 
-      // อัปโหลดทีละไฟล์
+      setUploadProgress(15);
+
+      // ประมวลผลไฟล์และตรวจสอบความซ้ำ
+      const processedFiles: Array<{ file: File; hash: string; originalIndex: number }> = [];
+      
       for (let i = 0; i < files.length; i++) {
         let file = files[i];
         
-        // ตรวจสอบและแปลงไฟล์ HEIC
+        // แปลง HEIC ถ้าจำเป็น
         const isHEIC = file.name.toLowerCase().endsWith('.heic') || 
                        file.name.toLowerCase().endsWith('.heif');
-        
         if (isHEIC) {
           file = await convertHeicToJpeg(file);
         }
         
-        const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+        // คำนวณ hash
+        const hash = await calculateFileHash(file);
         
-        // อัปโหลดไฟล์
-        const fileUrl = await galleryApi.uploadFile(file, fileType);
+        // ตรวจสอบว่าซ้ำหรือไม่
+        if (!existingHashes.has(hash) && !processedFiles.some(pf => pf.hash === hash)) {
+          processedFiles.push({ file, hash, originalIndex: i });
+          existingHashes.add(hash);
+        }
+        
+        setUploadProgress(15 + Math.round((i + 1) / files.length * 15));
+      }
 
-        // สร้างชื่อจากชื่อไฟล์
-        const title = file.name.replace(/\.[^/.]+$/, '');
+      const duplicateCount = files.length - processedFiles.length;
+      if (duplicateCount > 0) {
+        setError(`พบรูปซ้ำ ${duplicateCount} รูป จะอัปโหลดเฉพาะรูปที่ไม่ซ้ำ (${processedFiles.length} รูป)`);
+      }
 
-        // สร้างรายการใหม่
-        const newItem = await galleryApi.create({
-          title,
-          fileUrl,
-          fileType,
-          order: maxOrder + i + 1
-        });
+      if (processedFiles.length === 0) {
+        setError('ไม่มีรูปใหม่ที่จะอัปโหลด (รูปทั้งหมดซ้ำกับที่มีอยู่แล้ว)');
+        setUploading(false);
+        return;
+      }
 
-        newItems.push(newItem);
-        setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+      // อัปโหลดแบบ parallel (ทีละ 3 ไฟล์)
+      const newItems: GalleryItem[] = [];
+      const batchSize = 3;
+      
+      for (let i = 0; i < processedFiles.length; i += batchSize) {
+        const batch = processedFiles.slice(i, i + batchSize);
+        
+        const batchResults = await Promise.all(
+          batch.map(async ({ file }, batchIndex) => {
+            const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+            const fileUrl = await galleryApi.uploadFile(file, fileType);
+            const title = file.name.replace(/\.[^/.]+$/, '');
+            
+            return await galleryApi.create({
+              title,
+              fileUrl,
+              fileType,
+              order: maxOrder + i + batchIndex + 1
+            });
+          })
+        );
+        
+        newItems.push(...batchResults);
+        setUploadProgress(30 + Math.round(((i + batch.length) / processedFiles.length) * 70));
       }
 
       setItems(prev => [...prev, ...newItems]);
       setShowAddModal(false);
       resetForm();
+      
+      if (duplicateCount > 0) {
+        setTimeout(() => setError(null), 5000); // ซ่อนข้อความหลัง 5 วินาที
+      }
     } catch (err) {
       console.error('Error adding items:', err);
       setError(err instanceof Error ? err.message : 'ไม่สามารถเพิ่มรายการได้');
@@ -163,7 +227,21 @@ export const ManageGallery = () => {
       alert('บางไฟล์ไม่ใช่รูปภาพหรือวิดีโอ จะถูกข้ามไป');
     }
 
-    setFiles(prev => [...prev, ...validFiles]);
+    // ตรวจสอบไฟล์ซ้ำ (เช็คชื่อและขนาดไฟล์)
+    const uniqueFiles = validFiles.filter(newFile => {
+      const isDuplicate = files.some(existingFile => 
+        existingFile.name === newFile.name && 
+        existingFile.size === newFile.size
+      );
+      return !isDuplicate;
+    });
+
+    const duplicateCount = validFiles.length - uniqueFiles.length;
+    if (duplicateCount > 0) {
+      alert(`พบไฟล์ซ้ำ ${duplicateCount} ไฟล์ จะข้ามไฟล์ซ้ำ`);
+    }
+
+    setFiles(prev => [...prev, ...uniqueFiles]);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -192,7 +270,21 @@ export const ManageGallery = () => {
       alert('บางไฟล์ไม่ใช่รูปภาพหรือวิดีโอ จะถูกข้ามไป');
     }
 
-    setFiles(prev => [...prev, ...validFiles]);
+    // ตรวจสอบไฟล์ซ้ำ (เช็คชื่อและขนาดไฟล์)
+    const uniqueFiles = validFiles.filter(newFile => {
+      const isDuplicate = files.some(existingFile => 
+        existingFile.name === newFile.name && 
+        existingFile.size === newFile.size
+      );
+      return !isDuplicate;
+    });
+
+    const duplicateCount = validFiles.length - uniqueFiles.length;
+    if (duplicateCount > 0) {
+      alert(`พบไฟล์ซ้ำ ${duplicateCount} ไฟล์ จะข้ามไฟล์ซ้ำ`);
+    }
+
+    setFiles(prev => [...prev, ...uniqueFiles]);
   };
 
   const removeFile = (index: number) => {
