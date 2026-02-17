@@ -47,14 +47,6 @@ export const ManageGallery = () => {
     }
   };
 
-  // คำนวณ hash ของไฟล์เพื่อตรวจสอบความซ้ำ
-  const calculateFileHash = async (file: File): Promise<string> => {
-    const buffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
   const convertHeicToJpeg = async (file: File): Promise<File> => {
     try {
       const convertedBlob = await heic2any({
@@ -82,18 +74,17 @@ export const ManageGallery = () => {
     try {
       setUploading(true);
       setError(null);
-      setUploadProgress(0);
+      setUploadProgress(5);
 
       const maxOrder = Math.max(...items.map(item => item.order), -1);
       
-      // ตรวจสอบความซ้ำด้วย hash ของไฟล์ที่จะอัปโหลดเท่านั้น (ไม่ดาวน์โหลดรูปเดิม)
-      const fileHashes = new Map<string, File>();
-      const processedFiles: Array<{ file: File; originalIndex: number }> = [];
+      // กรองไฟล์ซ้ำด้วยชื่อและขนาดไฟล์ (ไม่ใช้ hash เพราะช้า)
+      const seenFiles = new Map<string, boolean>();
+      const processedFiles: File[] = [];
       
-      // คำนวณ hash และกรองไฟล์ซ้ำ
-      let processed = 0;
+      // ประมวลผลไฟล์แบบ parallel
       await Promise.all(
-        files.map(async (file, index) => {
+        files.map(async (file) => {
           let processedFile = file;
           
           // แปลง HEIC ถ้าจำเป็น
@@ -103,17 +94,13 @@ export const ManageGallery = () => {
             processedFile = await convertHeicToJpeg(file);
           }
           
-          // คำนวณ hash
-          const hash = await calculateFileHash(processedFile);
+          // สร้าง key จากชื่อและขนาดไฟล์
+          const fileKey = `${processedFile.name}-${processedFile.size}`;
           
-          // เก็บเฉพาะไฟล์ที่ไม่ซ้ำ
-          if (!fileHashes.has(hash)) {
-            fileHashes.set(hash, processedFile);
-            processedFiles.push({ file: processedFile, originalIndex: index });
+          if (!seenFiles.has(fileKey)) {
+            seenFiles.set(fileKey, true);
+            processedFiles.push(processedFile);
           }
-          
-          processed++;
-          setUploadProgress(Math.round((processed / files.length) * 10));
         })
       );
 
@@ -128,6 +115,8 @@ export const ManageGallery = () => {
         return;
       }
 
+      setUploadProgress(10);
+
       // อัปโหลดแบบ parallel (ทีละ 10 ไฟล์)
       const newItems: GalleryItem[] = [];
       const batchSize = 10;
@@ -136,7 +125,7 @@ export const ManageGallery = () => {
         const batch = processedFiles.slice(i, i + batchSize);
         
         const batchResults = await Promise.all(
-          batch.map(async ({ file }, batchIndex) => {
+          batch.map(async (file, batchIndex) => {
             const fileType = file.type.startsWith('image/') ? 'image' : 'video';
             const fileUrl = await galleryApi.uploadFile(file, fileType);
             const title = file.name.replace(/\.[^/.]+$/, '');
