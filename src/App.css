@@ -16,7 +16,7 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background: #fafafa;
+  background: #ffffff;
   color: #1a1a1a;
 }
 
@@ -24,7 +24,7 @@ body {
   display: flex;
   height: 100vh;
   width: 100vw;
-  background: #fafafa;
+  background: #ffffff;
 }
 
 .sidebar {
@@ -914,13 +914,19 @@ body {
 }
 
 .loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #3b82f6;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top: 3px solid #3b82f6;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 1rem 0;
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .loading-progress {
@@ -1392,7 +1398,7 @@ body {
 /* Members Page - Professional Black & White Theme */
 .members-container {
   min-height: 100vh;
-  background: #fafafa;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
 }
@@ -1640,7 +1646,7 @@ body {
 /* Home Page Styles */
 .home-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;

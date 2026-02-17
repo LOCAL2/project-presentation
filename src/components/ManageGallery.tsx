@@ -9,11 +9,10 @@ export const ManageGallery = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   
   // Form states
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [fileType, setFileType] = useState<'image' | 'video'>('image');
+  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     loadGallery();
@@ -49,33 +48,48 @@ export const ManageGallery = () => {
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !file) return;
+    if (files.length === 0) return;
 
     try {
       setUploading(true);
       setError(null);
+      setUploadProgress(0);
 
-      // อัปโหลดไฟล์
-      const fileUrl = await galleryApi.uploadFile(file, fileType);
-
-      // สร้างรายการใหม่
       const maxOrder = Math.max(...items.map(item => item.order), -1);
-      const newItem = await galleryApi.create({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        fileUrl,
-        fileType,
-        order: maxOrder + 1
-      });
+      const newItems: GalleryItem[] = [];
 
-      setItems(prev => [...prev, newItem]);
+      // อัปโหลดทีละไฟล์
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileType = file.type.startsWith('image/') ? 'image' : 'video';
+        
+        // อัปโหลดไฟล์
+        const fileUrl = await galleryApi.uploadFile(file, fileType);
+
+        // สร้างชื่อจากชื่อไฟล์
+        const title = file.name.replace(/\.[^/.]+$/, '');
+
+        // สร้างรายการใหม่
+        const newItem = await galleryApi.create({
+          title,
+          fileUrl,
+          fileType,
+          order: maxOrder + i + 1
+        });
+
+        newItems.push(newItem);
+        setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+      }
+
+      setItems(prev => [...prev, ...newItems]);
       setShowAddModal(false);
       resetForm();
     } catch (err) {
-      console.error('Error adding item:', err);
+      console.error('Error adding items:', err);
       setError('ไม่สามารถเพิ่มรายการได้');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -100,28 +114,53 @@ export const ManageGallery = () => {
   };
 
   const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setFile(null);
-    setFileType('image');
+    setFiles([]);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
 
-    // ตรวจสอบประเภทไฟล์
-    if (selectedFile.type.startsWith('image/')) {
-      setFileType('image');
-      setFile(selectedFile);
-      if (!title) setTitle(selectedFile.name.replace(/\.[^/.]+$/, ''));
-    } else if (selectedFile.type.startsWith('video/')) {
-      setFileType('video');
-      setFile(selectedFile);
-      if (!title) setTitle(selectedFile.name.replace(/\.[^/.]+$/, ''));
-    } else {
-      alert('กรุณาเลือกไฟล์รูปภาพหรือวิดีโอเท่านั้น');
+    // กรองเฉพาะไฟล์รูปภาพและวิดีโอ
+    const validFiles = selectedFiles.filter(file => 
+      file.type.startsWith('image/') || file.type.startsWith('video/')
+    );
+
+    if (validFiles.length !== selectedFiles.length) {
+      alert('บางไฟล์ไม่ใช่รูปภาพหรือวิดีโอ จะถูกข้ามไป');
     }
+
+    setFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const validFiles = droppedFiles.filter(file => 
+      file.type.startsWith('image/') || file.type.startsWith('video/')
+    );
+
+    if (validFiles.length !== droppedFiles.length) {
+      alert('บางไฟล์ไม่ใช่รูปภาพหรือวิดีโอ จะถูกข้ามไป');
+    }
+
+    setFiles(prev => [...prev, ...validFiles]);
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   if (loading && items.length === 0) {
@@ -157,7 +196,7 @@ export const ManageGallery = () => {
         </div>
       )}
 
-      {/* Gallery Grid */}
+      {/* Gallery Grid - 4 columns */}
       {items.length === 0 ? (
         <div className="manage-empty-state">
           <div className="manage-empty-state__icon">📸</div>
@@ -173,12 +212,12 @@ export const ManageGallery = () => {
           </button>
         </div>
       ) : (
-        <div className="manage-gallery-grid">
+        <div className="manage-gallery-grid manage-gallery-grid--4col">
           {items.map((item) => (
             <div key={item.id} className="manage-gallery-card">
               <div className="manage-gallery-card__media">
                 {item.fileType === 'image' ? (
-                  <img src={item.fileUrl} alt={item.title} />
+                  <img src={item.fileUrl} alt={item.title} loading="lazy" />
                 ) : (
                   <div className="manage-gallery-card__video">
                     <video src={item.fileUrl} />
@@ -186,17 +225,10 @@ export const ManageGallery = () => {
                   </div>
                 )}
               </div>
-              <div className="manage-gallery-card__content">
-                <h3>{item.title}</h3>
-                {item.description && <p>{item.description}</p>}
-                <span className="manage-gallery-card__type">
-                  {item.fileType === 'image' ? '📷 รูปภาพ' : '🎬 วิดีโอ'}
-                </span>
-              </div>
               <button 
                 className="manage-gallery-card__delete"
                 onClick={() => {
-                  if (confirm(`ต้องการลบ "${item.title}" หรือไม่?`)) {
+                  if (confirm(`ต้องการลบรูปภาพนี้หรือไม่?`)) {
                     handleDeleteItem(item);
                   }
                 }}
@@ -214,56 +246,91 @@ export const ManageGallery = () => {
         <div className="manage-modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="manage-modal" onClick={(e) => e.stopPropagation()}>
             <div className="manage-modal__header">
-              <h2 className="manage-modal__title">เพิ่มรูปภาพ/วิดีโอ</h2>
+              <h2 className="manage-modal__title">เพิ่มรูปภาพ</h2>
               <button className="manage-modal__close" onClick={() => setShowAddModal(false)}>×</button>
             </div>
             
             <form onSubmit={handleAddItem} className="manage-modal__form">
               <div className="manage-form-group">
-                <label className="manage-form-label">ชื่อ *</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="manage-form-input"
-                  placeholder="กรอกชื่อ"
-                  required
-                />
-              </div>
-
-              <div className="manage-form-group">
-                <label className="manage-form-label">คำอธิบาย</label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="manage-form-input"
-                  placeholder="กรอกคำอธิบาย (ถ้ามี)"
-                  rows={3}
-                />
-              </div>
-
-              <div className="manage-form-group">
-                <label className="manage-form-label">ไฟล์ *</label>
-                <div className={`manage-file-upload ${file ? 'manage-file-upload--has-file' : ''}`}>
+                <label className="manage-form-label">เลือกรูปภาพ *</label>
+                <div 
+                  className={`manage-file-dropzone ${isDragging ? 'manage-file-dropzone--dragging' : ''} ${files.length > 0 ? 'manage-file-dropzone--has-files' : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
                   <input
                     type="file"
-                    accept="image/*,video/*"
+                    accept="image/*"
                     onChange={handleFileChange}
                     className="manage-file-upload__input"
                     id="gallery-file-upload"
+                    multiple
                   />
-                  <label htmlFor="gallery-file-upload" className="manage-file-upload__label">
-                    {file ? (
-                      <span>✓ {file.name}</span>
+                  <label htmlFor="gallery-file-upload" className="manage-file-dropzone__label">
+                    {files.length === 0 ? (
+                      <>
+                        <div className="manage-file-dropzone__icon">📁</div>
+                        <div className="manage-file-dropzone__text">
+                          <strong>คลิกเพื่อเลือกรูปภาพ</strong> หรือลากไฟล์มาวางที่นี่
+                        </div>
+                        <div className="manage-file-dropzone__hint">
+                          รองรับ: JPG, PNG, GIF (สามารถเลือกหลายไฟล์พร้อมกัน)
+                        </div>
+                      </>
                     ) : (
-                      <span>📁 เลือกรูปภาพหรือวิดีโอ</span>
+                      <>
+                        <div className="manage-file-dropzone__icon">✓</div>
+                        <div className="manage-file-dropzone__text">
+                          <strong>เลือกแล้ว {files.length} ไฟล์</strong>
+                        </div>
+                        <div className="manage-file-dropzone__hint">
+                          คลิกเพื่อเพิ่มรูปภาพเพิ่มเติม
+                        </div>
+                      </>
                     )}
                   </label>
                 </div>
-                <p className="manage-form-hint">
-                  รองรับ: รูปภาพ (JPG, PNG, GIF) และวิดีโอ (MP4, WebM)
-                </p>
               </div>
+
+              {/* File Preview */}
+              {files.length > 0 && (
+                <div className="manage-form-group">
+                  <label className="manage-form-label">รูปภาพที่เลือก ({files.length})</label>
+                  <div className="manage-file-preview-grid">
+                    {files.map((file, index) => (
+                      <div key={index} className="manage-file-preview-item">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={file.name}
+                          onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
+                        />
+                        <button
+                          type="button"
+                          className="manage-file-preview-item__remove"
+                          onClick={() => removeFile(index)}
+                          title="ลบ"
+                        >
+                          ×
+                        </button>
+                        <div className="manage-file-preview-item__name">{file.name}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Progress */}
+              {uploading && (
+                <div className="manage-form-group">
+                  <div className="manage-upload-progress">
+                    <div className="manage-upload-progress__bar" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                  <p className="manage-upload-progress__text">
+                    กำลังอัพโหลด... {uploadProgress}%
+                  </p>
+                </div>
+              )}
 
               <div className="manage-modal__actions">
                 <button 
@@ -277,9 +344,9 @@ export const ManageGallery = () => {
                 <button 
                   type="submit" 
                   className="manage-btn manage-btn--primary"
-                  disabled={uploading || !title.trim() || !file}
+                  disabled={uploading || files.length === 0}
                 >
-                  {uploading ? 'กำลังอัพโหลด...' : 'เพิ่ม'}
+                  {uploading ? `กำลังอัพโหลด... (${uploadProgress}%)` : `เพิ่ม ${files.length} รูปภาพ`}
                 </button>
               </div>
             </form>

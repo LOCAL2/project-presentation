@@ -22,15 +22,18 @@ import { supabase } from '../lib/supabase';
 import { storageApi } from '../services/storage';
 import { ManageGallery } from './ManageGallery';
 import { ManageMembers } from './ManageMembers';
+import '../styles/manage.css';
 
 // Sortable Document Card Component
 function SortableDocumentCard({ 
   doc, 
   onDelete,
+  onEdit,
   isChild = false 
 }: { 
   doc: Document; 
   onDelete: (doc: Document) => void;
+  onEdit: (doc: Document) => void;
   isChild?: boolean;
 }) {
   const {
@@ -65,9 +68,20 @@ function SortableDocumentCard({
       <div className="manage-doc-card__content">
         <h3 className="manage-doc-card__title">{doc.title}</h3>
         <p className="manage-doc-card__meta">
-          {doc.type === 'canva' ? '🎨 Canva Presentation' : '📄 PDF Document'}
+          {doc.type === 'canva' ? 'Canva Presentation' : 'PDF Document'}
         </p>
       </div>
+      
+      <button 
+        className="manage-doc-card__edit"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(doc);
+        }}
+        title="แก้ไขชื่อเอกสาร"
+      >
+        ✏️
+      </button>
       
       <button 
         className="manage-doc-card__delete"
@@ -91,8 +105,11 @@ export const ManagePage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [showEditDocumentModal, setShowEditDocumentModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
+  const [editDocumentTitle, setEditDocumentTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -293,6 +310,38 @@ export const ManagePage = () => {
     setEditingCategory(category);
     setEditCategoryName(category.title);
     setShowEditCategoryModal(true);
+  };
+
+  const handleEditDocument = (doc: Document) => {
+    setEditingDocument(doc);
+    setEditDocumentTitle(doc.title);
+    setShowEditDocumentModal(true);
+  };
+
+  const handleUpdateDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDocument || !editDocumentTitle.trim()) return;
+
+    try {
+      setLoading(true);
+      await documentsApi.update(editingDocument.id, { title: editDocumentTitle.trim() });
+      
+      setDocuments(prev => prev.map(doc => 
+        doc.id === editingDocument.id 
+          ? { ...doc, title: editDocumentTitle.trim() }
+          : doc
+      ));
+      
+      setShowEditDocumentModal(false);
+      setEditingDocument(null);
+      setEditDocumentTitle('');
+      setError(null);
+    } catch (err) {
+      console.error('Error updating document:', err);
+      setError('ไม่สามารถแก้ไขชื่อเอกสารได้');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdateCategory = async (e: React.FormEvent) => {
@@ -496,6 +545,7 @@ export const ManagePage = () => {
                       key={doc.id}
                       doc={doc}
                       onDelete={handleDeleteDocument}
+                      onEdit={handleEditDocument}
                     />
                   ))}
                 </div>
@@ -557,6 +607,7 @@ export const ManagePage = () => {
                           key={doc.id}
                           doc={doc}
                           onDelete={handleDeleteDocument}
+                          onEdit={handleEditDocument}
                           isChild={true}
                         />
                       ))}
@@ -772,6 +823,51 @@ export const ManagePage = () => {
                   type="submit" 
                   className="manage-btn manage-btn--primary"
                   disabled={loading || !editCategoryName.trim()}
+                >
+                  {loading ? 'กำลังบันทึก...' : 'บันทึก'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Document Modal */}
+      {showEditDocumentModal && editingDocument && (
+        <div className="manage-modal-overlay" onClick={() => setShowEditDocumentModal(false)}>
+          <div className="manage-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="manage-modal__header">
+              <h2 className="manage-modal__title">แก้ไขชื่อเอกสาร</h2>
+              <button className="manage-modal__close" onClick={() => setShowEditDocumentModal(false)}>×</button>
+            </div>
+            
+            <form onSubmit={handleUpdateDocument} className="manage-modal__form">
+              <div className="manage-form-group">
+                <label className="manage-form-label">ชื่อเอกสาร *</label>
+                <input
+                  type="text"
+                  value={editDocumentTitle}
+                  onChange={(e) => setEditDocumentTitle(e.target.value)}
+                  className="manage-form-input"
+                  placeholder="กรอกชื่อเอกสาร"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div className="manage-modal__actions">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEditDocumentModal(false)} 
+                  className="manage-btn manage-btn--secondary"
+                  disabled={loading}
+                >
+                  ยกเลิก
+                </button>
+                <button 
+                  type="submit" 
+                  className="manage-btn manage-btn--primary"
+                  disabled={loading || !editDocumentTitle.trim()}
                 >
                   {loading ? 'กำลังบันทึก...' : 'บันทึก'}
                 </button>

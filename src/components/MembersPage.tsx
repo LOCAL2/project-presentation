@@ -203,40 +203,7 @@ export const MembersPage = () => {
                         </svg>
                       </a>
                     )}
-                    {member.gmailUrl && (
-                      <a 
-                        href={member.gmailUrl.startsWith('mailto:') ? member.gmailUrl : `mailto:${member.gmailUrl}`}
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          width: '36px',
-                          height: '36px',
-                          background: '#ea4335',
-                          color: 'white',
-                          borderRadius: '8px',
-                          textDecoration: 'none',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                        }}
-                        title={`ส่งอีเมลถึง ${member.gmailUrl.replace('mailto:', '')}`}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)';
-                          e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)';
-                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-                        }}
-                      >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.910 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/>
-                        </svg>
-                      </a>
-                    )}
-                    {!member.facebookUrl && !member.instagramUrl && !member.gmailUrl && (
+                    {!member.facebookUrl && !member.instagramUrl && (
                       <span style={{ fontSize: '0.875rem', color: '#9ca3af', fontStyle: 'italic' }}>
                         ไม่มีช่องทางติดต่อ
                       </span>
