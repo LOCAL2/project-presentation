@@ -55,10 +55,7 @@ export const ManageGallery = () => {
         quality: 0.9
       });
 
-      // heic2any อาจคืนค่าเป็น Blob หรือ Blob[] ขึ้นอยู่กับไฟล์
       const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-      
-      // สร้าง File object ใหม่จาก Blob
       const fileName = file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg');
       return new File([blob], fileName, { type: 'image/jpeg' });
     } catch (error) {
@@ -72,77 +69,99 @@ export const ManageGallery = () => {
     if (files.length === 0) return;
 
     try {
+      console.log('[Upload] เริ่มต้นการอัปโหลด', { totalFiles: files.length });
       setUploading(true);
       setError(null);
-      setUploadProgress(5);
+      setUploadProgress(0);
 
       const maxOrder = Math.max(...items.map(item => item.order), -1);
+      console.log('[Upload] Max order:', maxOrder);
       
-      // กรองไฟล์ซ้ำด้วยชื่อและขนาดไฟล์ (ไม่ใช้ hash เพราะช้า)
+      // กรองไฟล์ซ้ำด้วยชื่อและขนาด (เช็คก่อนประมวลผล)
+      console.log('[Upload] เริ่มเช็คไฟล์ซ้ำ...');
       const seenFiles = new Map<string, boolean>();
-      const processedFiles: File[] = [];
+      const uniqueFiles: File[] = [];
       
-      // ประมวลผลไฟล์แบบ parallel
-      await Promise.all(
-        files.map(async (file) => {
-          let processedFile = file;
-          
-          // แปลง HEIC ถ้าจำเป็น
-          const isHEIC = file.name.toLowerCase().endsWith('.heic') || 
-                         file.name.toLowerCase().endsWith('.heif');
-          if (isHEIC) {
-            processedFile = await convertHeicToJpeg(file);
-          }
-          
-          // สร้าง key จากชื่อและขนาดไฟล์
-          const fileKey = `${processedFile.name}-${processedFile.size}`;
-          
-          if (!seenFiles.has(fileKey)) {
-            seenFiles.set(fileKey, true);
-            processedFiles.push(processedFile);
-          }
-        })
-      );
-
-      const duplicateCount = files.length - processedFiles.length;
-      if (duplicateCount > 0) {
-        setError(`พบรูปซ้ำ ${duplicateCount} รูป จะอัปโหลดเฉพาะรูปที่ไม่ซ้ำ (${processedFiles.length} รูป)`);
+      for (const file of files) {
+        const fileKey = `${file.name}-${file.size}`;
+        if (!seenFiles.has(fileKey)) {
+          seenFiles.set(fileKey, true);
+          uniqueFiles.push(file);
+          console.log('[Upload] ไฟล์ไม่ซ้ำ:', file.name, `(${(file.size / 1024).toFixed(2)} KB)`);
+        } else {
+          console.log('[Upload] ไฟล์ซ้ำ (ข้าม):', file.name);
+        }
       }
 
-      if (processedFiles.length === 0) {
+      const duplicateCount = files.length - uniqueFiles.length;
+      console.log('[Upload] สรุปการเช็คซ้ำ:', { total: files.length, unique: uniqueFiles.length, duplicate: duplicateCount });
+      
+      if (duplicateCount > 0) {
+        setError(`พบรูปซ้ำ ${duplicateCount} รูป จะอัปโหลดเฉพาะรูปที่ไม่ซ้ำ (${uniqueFiles.length} รูป)`);
+      }
+
+      if (uniqueFiles.length === 0) {
+        console.log('[Upload] ไม่มีไฟล์ที่จะอัปโหลด');
         setError('ไม่มีรูปใหม่ที่จะอัปโหลด (รูปทั้งหมดซ้ำกัน)');
         setUploading(false);
         return;
       }
 
-      setUploadProgress(10);
-
-      // อัปโหลดแบบ parallel (ทีละ 10 ไฟล์)
+      // อัปโหลดแบบ parallel (ทีละ 5 ไฟล์)
+      console.log('[Upload] เริ่มอัปโหลด', uniqueFiles.length, 'ไฟล์');
       const newItems: GalleryItem[] = [];
-      const batchSize = 10;
+      const batchSize = 5;
       
-      for (let i = 0; i < processedFiles.length; i += batchSize) {
-        const batch = processedFiles.slice(i, i + batchSize);
+      for (let i = 0; i < uniqueFiles.length; i += batchSize) {
+        const batch = uniqueFiles.slice(i, i + batchSize);
+        console.log(`[Upload] Batch ${Math.floor(i / batchSize) + 1}:`, batch.map(f => f.name));
         
         const batchResults = await Promise.all(
           batch.map(async (file, batchIndex) => {
-            const fileType = file.type.startsWith('image/') ? 'image' : 'video';
-            const fileUrl = await galleryApi.uploadFile(file, fileType);
-            const title = file.name.replace(/\.[^/.]+$/, '');
+            const fileNum = i + batchIndex + 1;
+            console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] เริ่มประมวลผล:`, file.name);
             
-            return await galleryApi.create({
+            // แปลง HEIC ถ้าจำเป็น
+            let processedFile = file;
+            const isHEIC = file.name.toLowerCase().endsWith('.heic') || 
+                           file.name.toLowerCase().endsWith('.heif');
+            if (isHEIC) {
+              console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] กำลังแปลง HEIC:`, file.name);
+              const startTime = Date.now();
+              processedFile = await convertHeicToJpeg(file);
+              console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] แปลง HEIC เสร็จ:`, processedFile.name, `(${Date.now() - startTime}ms)`);
+            }
+            
+            const fileType = processedFile.type.startsWith('image/') ? 'image' : 'video';
+            console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] กำลังอัปโหลดไฟล์:`, processedFile.name, `(${fileType})`);
+            
+            const uploadStartTime = Date.now();
+            const fileUrl = await galleryApi.uploadFile(processedFile, fileType);
+            console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] อัปโหลดเสร็จ:`, processedFile.name, `(${Date.now() - uploadStartTime}ms)`);
+            
+            const title = processedFile.name.replace(/\.[^/.]+$/, '');
+            
+            console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] กำลังบันทึกลง DB:`, title);
+            const dbStartTime = Date.now();
+            const result = await galleryApi.create({
               title,
               fileUrl,
               fileType,
               order: maxOrder + i + batchIndex + 1
             });
+            console.log(`[Upload] [${fileNum}/${uniqueFiles.length}] บันทึก DB เสร็จ:`, title, `(${Date.now() - dbStartTime}ms)`);
+            
+            return result;
           })
         );
         
         newItems.push(...batchResults);
-        setUploadProgress(10 + Math.round(((i + batch.length) / processedFiles.length) * 90));
+        const progress = Math.round(((i + batch.length) / uniqueFiles.length) * 100);
+        console.log(`[Upload] Progress: ${progress}% (${i + batch.length}/${uniqueFiles.length})`);
+        setUploadProgress(progress);
       }
 
+      console.log('[Upload] อัปโหลดเสร็จทั้งหมด:', newItems.length, 'รายการ');
       setItems(prev => [...prev, ...newItems]);
       setShowAddModal(false);
       resetForm();
@@ -150,12 +169,15 @@ export const ManageGallery = () => {
       if (duplicateCount > 0) {
         setTimeout(() => setError(null), 5000);
       }
+      
+      console.log('[Upload] สำเร็จ!');
     } catch (err) {
-      console.error('Error adding items:', err);
+      console.error('[Upload] เกิดข้อผิดพลาด:', err);
       setError(err instanceof Error ? err.message : 'ไม่สามารถเพิ่มรายการได้');
     } finally {
       setUploading(false);
       setUploadProgress(0);
+      console.log('[Upload] จบกระบวนการ');
     }
   };
 
