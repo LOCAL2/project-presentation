@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { galleryApi, type GalleryItem } from '../services/gallery-api';
 import { supabase } from '../lib/supabase';
+import heic2any from 'heic2any';
 
 export const ManageGallery = () => {
   const [items, setItems] = useState<GalleryItem[]>([]);
@@ -46,6 +47,26 @@ export const ManageGallery = () => {
     }
   };
 
+  const convertHeicToJpeg = async (file: File): Promise<File> => {
+    try {
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.9
+      });
+
+      // heic2any อาจคืนค่าเป็น Blob หรือ Blob[] ขึ้นอยู่กับไฟล์
+      const blob = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+      
+      // สร้าง File object ใหม่จาก Blob
+      const fileName = file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg');
+      return new File([blob], fileName, { type: 'image/jpeg' });
+    } catch (error) {
+      console.error('Error converting HEIC:', error);
+      throw new Error('ไม่สามารถแปลงไฟล์ HEIC ได้');
+    }
+  };
+
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (files.length === 0) return;
@@ -60,7 +81,16 @@ export const ManageGallery = () => {
 
       // อัปโหลดทีละไฟล์
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+        let file = files[i];
+        
+        // ตรวจสอบและแปลงไฟล์ HEIC
+        const isHEIC = file.name.toLowerCase().endsWith('.heic') || 
+                       file.name.toLowerCase().endsWith('.heif');
+        
+        if (isHEIC) {
+          file = await convertHeicToJpeg(file);
+        }
+        
         const fileType = file.type.startsWith('image/') ? 'image' : 'video';
         
         // อัปโหลดไฟล์
@@ -86,7 +116,7 @@ export const ManageGallery = () => {
       resetForm();
     } catch (err) {
       console.error('Error adding items:', err);
-      setError('ไม่สามารถเพิ่มรายการได้');
+      setError(err instanceof Error ? err.message : 'ไม่สามารถเพิ่มรายการได้');
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -121,10 +151,13 @@ export const ManageGallery = () => {
     const selectedFiles = Array.from(e.target.files || []);
     if (selectedFiles.length === 0) return;
 
-    // กรองเฉพาะไฟล์รูปภาพและวิดีโอ
-    const validFiles = selectedFiles.filter(file => 
-      file.type.startsWith('image/') || file.type.startsWith('video/')
-    );
+    // กรองเฉพาะไฟล์รูปภาพและวิดีโอ (รวม HEIC)
+    const validFiles = selectedFiles.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      const isHEIC = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      return isImage || isVideo || isHEIC;
+    });
 
     if (validFiles.length !== selectedFiles.length) {
       alert('บางไฟล์ไม่ใช่รูปภาพหรือวิดีโอ จะถูกข้ามไป');
@@ -148,9 +181,12 @@ export const ManageGallery = () => {
     setIsDragging(false);
 
     const droppedFiles = Array.from(e.dataTransfer.files);
-    const validFiles = droppedFiles.filter(file => 
-      file.type.startsWith('image/') || file.type.startsWith('video/')
-    );
+    const validFiles = droppedFiles.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      const isHEIC = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+      return isImage || isVideo || isHEIC;
+    });
 
     if (validFiles.length !== droppedFiles.length) {
       alert('บางไฟล์ไม่ใช่รูปภาพหรือวิดีโอ จะถูกข้ามไป');
@@ -261,7 +297,7 @@ export const ManageGallery = () => {
                 >
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.heic,.heif"
                     onChange={handleFileChange}
                     className="manage-file-upload__input"
                     id="gallery-file-upload"
@@ -275,7 +311,7 @@ export const ManageGallery = () => {
                           <strong>คลิกเพื่อเลือกรูปภาพ</strong> หรือลากไฟล์มาวางที่นี่
                         </div>
                         <div className="manage-file-dropzone__hint">
-                          รองรับ: JPG, PNG, GIF (สามารถเลือกหลายไฟล์พร้อมกัน)
+                          รองรับ: JPG, PNG, GIF, HEIC (สามารถเลือกหลายไฟล์พร้อมกัน)
                         </div>
                       </>
                     ) : (
