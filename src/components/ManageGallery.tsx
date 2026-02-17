@@ -86,53 +86,36 @@ export const ManageGallery = () => {
 
       const maxOrder = Math.max(...items.map(item => item.order), -1);
       
-      // คำนวณ hash ของไฟล์ที่มีอยู่แล้วในระบบ
-      setUploadProgress(5);
-      const existingHashes = new Set<string>();
+      // ตรวจสอบความซ้ำด้วย hash ของไฟล์ที่จะอัปโหลดเท่านั้น (ไม่ดาวน์โหลดรูปเดิม)
+      const fileHashes = new Map<string, File>();
+      const processedFiles: Array<{ file: File; originalIndex: number }> = [];
       
-      // ดึง URL ของรูปที่มีอยู่แล้วและคำนวณ hash (ทำแบบ parallel)
+      // คำนวณ hash และกรองไฟล์ซ้ำ
+      let processed = 0;
       await Promise.all(
-        items.slice(0, 50).map(async (item) => { // จำกัดแค่ 50 รายการล่าสุดเพื่อความเร็ว
-          try {
-            const response = await fetch(item.fileUrl);
-            const blob = await response.blob();
-            const buffer = await blob.arrayBuffer();
-            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            existingHashes.add(hash);
-          } catch (err) {
-            console.error('Error hashing existing file:', err);
+        files.map(async (file, index) => {
+          let processedFile = file;
+          
+          // แปลง HEIC ถ้าจำเป็น
+          const isHEIC = file.name.toLowerCase().endsWith('.heic') || 
+                         file.name.toLowerCase().endsWith('.heif');
+          if (isHEIC) {
+            processedFile = await convertHeicToJpeg(file);
           }
+          
+          // คำนวณ hash
+          const hash = await calculateFileHash(processedFile);
+          
+          // เก็บเฉพาะไฟล์ที่ไม่ซ้ำ
+          if (!fileHashes.has(hash)) {
+            fileHashes.set(hash, processedFile);
+            processedFiles.push({ file: processedFile, originalIndex: index });
+          }
+          
+          processed++;
+          setUploadProgress(Math.round((processed / files.length) * 10));
         })
       );
-
-      setUploadProgress(15);
-
-      // ประมวลผลไฟล์และตรวจสอบความซ้ำ
-      const processedFiles: Array<{ file: File; hash: string; originalIndex: number }> = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        let file = files[i];
-        
-        // แปลง HEIC ถ้าจำเป็น
-        const isHEIC = file.name.toLowerCase().endsWith('.heic') || 
-                       file.name.toLowerCase().endsWith('.heif');
-        if (isHEIC) {
-          file = await convertHeicToJpeg(file);
-        }
-        
-        // คำนวณ hash
-        const hash = await calculateFileHash(file);
-        
-        // ตรวจสอบว่าซ้ำหรือไม่
-        if (!existingHashes.has(hash) && !processedFiles.some(pf => pf.hash === hash)) {
-          processedFiles.push({ file, hash, originalIndex: i });
-          existingHashes.add(hash);
-        }
-        
-        setUploadProgress(15 + Math.round((i + 1) / files.length * 15));
-      }
 
       const duplicateCount = files.length - processedFiles.length;
       if (duplicateCount > 0) {
@@ -140,14 +123,14 @@ export const ManageGallery = () => {
       }
 
       if (processedFiles.length === 0) {
-        setError('ไม่มีรูปใหม่ที่จะอัปโหลด (รูปทั้งหมดซ้ำกับที่มีอยู่แล้ว)');
+        setError('ไม่มีรูปใหม่ที่จะอัปโหลด (รูปทั้งหมดซ้ำกัน)');
         setUploading(false);
         return;
       }
 
-      // อัปโหลดแบบ parallel (ทีละ 3 ไฟล์)
+      // อัปโหลดแบบ parallel (ทีละ 10 ไฟล์)
       const newItems: GalleryItem[] = [];
-      const batchSize = 3;
+      const batchSize = 10;
       
       for (let i = 0; i < processedFiles.length; i += batchSize) {
         const batch = processedFiles.slice(i, i + batchSize);
@@ -168,7 +151,7 @@ export const ManageGallery = () => {
         );
         
         newItems.push(...batchResults);
-        setUploadProgress(30 + Math.round(((i + batch.length) / processedFiles.length) * 70));
+        setUploadProgress(10 + Math.round(((i + batch.length) / processedFiles.length) * 90));
       }
 
       setItems(prev => [...prev, ...newItems]);
@@ -176,7 +159,7 @@ export const ManageGallery = () => {
       resetForm();
       
       if (duplicateCount > 0) {
-        setTimeout(() => setError(null), 5000); // ซ่อนข้อความหลัง 5 วินาที
+        setTimeout(() => setError(null), 5000);
       }
     } catch (err) {
       console.error('Error adding items:', err);
